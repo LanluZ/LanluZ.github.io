@@ -1,23 +1,32 @@
-<?php get_header();?>
-<div class="g">
-	<div class="row">
-		<?php
-		if(have_posts()){
-			while(have_posts()){
-				the_post();
-				?>
-				<div id="main" class="main g-desktop-3-4">
-					<?php theme_functions::page_content();?>
-					
-					<?php comments_template();?>
-				</div>
-				<?php include __DIR__ . '/sidebar.php';?>
-			<?php 
-			}
-		}else{ 
+<?php
+/**
+ * The template for displaying all pages.
+ *
+ * This is the template that displays all pages by default.
+ * Please note that this is the WordPress construct of pages
+ * and that other 'pages' on your WordPress site may use a
+ * different template.
+ *
+ * @link https://codex.wordpress.org/Template_Hierarchy
+ *
+ * @package Akina
+ */
+
+get_header(); ?>
+
+	<div id="primary" class="content-area">
+		<main id="main" class="site-main" role="main">
+
+			<?php
+			while ( have_posts() ) : the_post();
+
+				get_template_part( 'tpl/content', 'page' );
+
+			endwhile; // End of the loop.
 			?>
-			
-		<?php } ?>
-	</div>
-</div>
-<?php get_footer();?>
+
+		</main><!-- #main -->
+	</div><!-- #primary -->
+
+<?php
+get_footer();

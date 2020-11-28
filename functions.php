@@ -1,2077 +1,1827 @@
 <?php
-/** Theme options */
-include __DIR__ . '/core/core-options.php';
-
-/** Theme features */
-include __DIR__ . '/core/core-features.php';
-
-/** Theme functions */
-include __DIR__ . '/core/core-functions.php';
-
-/** 
- * theme_functions
+/**
+ * Sakura functions and definitions.
+ *
+ * @link https://developer.wordpress.org/themes/basics/theme-functions/
+ *
+ * @package Sakura
  */
-class theme_functions{
-	public static $iden = 'mx';
-	public static $basename;
-	public static $theme_edition = 1;
-	public static $theme_date = '2015-02-01 00:00';
-	public static $thumbnail_size = ['thumbnail',320,200,true];
-	public static $medium_size = ['medium',600,600,false];
-	public static $large_size = ['large',1024,1024,false];
-	public static $comment_avatar_size = 60;
-	public static $thumbnail_placeholder = 'http://ww4.sinaimg.cn/large/686ee05djw1ew56itdn2nj208w05k0sp.jpg';
-	public static $avatar_placeholder = 'http://ww2.sinaimg.cn/large/686ee05djw1ew5767l9voj2074074dfn.jpg';
-	public static $cache_expire = 3600;
-	public static $link_target = '_blank';
-	public static $colors = [
-		'61b4ca',	'e1b32a',	'ee916f',	'a89d84',
-		'86b767',	'6170ca',	'c461ca',	'ca6161',
-		'ca8661',	'333333',	'84a89e',	'a584a8'
-	];
-	/** 
-	 * theme_meta_translate(
-	 */
-	public static function theme_meta_translate($key = null){
-		$data = [
-			'name' => ___('MX'),
-			'theme_url' => ___('http://inn-studio.com/mx'),
-			'author_url' => ___('http://inn-studio.com'),
-			'author' => ___('INN STUDIO'),
-			'qq' => [
-				'number' => '272778765',
-				'link' => 'http://wpa.qq.com/msgrd?v=3&amp;uin=272778765&amp;site=qq&amp;menu=yes',
-			],
-			'qq_group' => [
-				'number' => '170306005',
-				'link' => 'http://wp.qq.com/wpa/qunwpa?idkey=d8c2be0e6c2e4b7dd2c0ff08d6198b618156d2357d12ab5dfbf6e5872f34a499',
-			],
-			'email' => 'kmvan.com@gmail.com',
-			'edition' => ___('Professional edition'),
-			'des' => ___('MX - Dream starts'),
-		];
-		if(!$key)
-			return $data;
-		return isset($data[$key]) ? $data[$key] : false;
-	}
-	/** 
-	 * init
-	 */	
-	public static function init(){
-		/** 
-		 * register menu
-		 */
-		register_nav_menus([
-			'menu-header' 			=> ___('Header menu'),
-			'menu-header-login' 	=> ___('Login header menu'),
-			'menu-mobile' 			=> ___('Mobile menu'),
-			'menu-mobile-login' 	=> ___('Login mobile menu'),
-			//'menu-top-bar' 			=> ___('Top bar menu'),
-			//'menu-top-bar-login'	=> ___('Login top bar menu'),
-			'links-footer'			=> ___('Footer links'),
-		]);
-		/** 
-		 * other
-		 */
-		add_action('widgets_init', __CLASS__ . '::widget_init');
-		add_filter('use_default_gallery_style','__return_false');
-		add_theme_support('html5',['comment-list','comment-form','search-form']);
 
-		add_image_size(self::$thumbnail_size[0],self::$thumbnail_size[1],self::$thumbnail_size[2],self::$thumbnail_size[3]);
-		
-		add_image_size(self::$medium_size[0],self::$medium_size[1],self::$medium_size[2],self::$medium_size[3]);
-		
-		add_image_size(self::$large_size[0],self::$large_size[1],self::$large_size[2],self::$large_size[3]);
-
-		add_theme_support('title-tag');
-		/** 
-		 * bg
-		 */
-		add_theme_support('custom-background',[
-			'default-color'			=> 'eeeeee',
-			'default-image'			=> '',
-			'default-position-x'	=> 'center',
-			'default-attachment'	=> 'fixed',
-			'wp-head-callback'		=> 'theme_features::_fix_custom_background_cb',
-		]);
-	}
-	/** 
-	 * widget_init
-	 */
-	public static function widget_init(){
-		$sidebar = [
-			'widget-area-home' => [
-				'name' 			=> ___('Home widget area'),
-				'description' 	=> ___('Appears on home in the sidebar.'),
-			],
-			'widget-area-archive' => [
-				'name' 			=> ___('Archive page widget area'),
-				'description' 	=> ___('Appears on archive page in the sidebar.'),
-			],
-			'widget-area-footer' => [
-				'name' 			=> ___('Footer widget area'),
-				'description' 	=> ___('Appears on all page in the footer.'),
-				'before_widget' => '<div class="g-desktop-1-4"><aside id="%1$s"><div class="widget %2$s">',
-				'after_widget'		=> '</div></aside></div>',
-			],
-			'widget-area-post' => [
-				'name' 			=> ___('Singular post widget area'),
-				'description' 	=> ___('Appears on post in the sidebar.')
-			],
-			'widget-area-page' => [
-				'name' 			=> ___('Singular page widget area'),
-				'description' 	=> ___('Appears on page in the sidebar.'),
-			],
-			'widget-area-404' => [
-				'name' 			=> ___('404 page widget area'),
-				'description' 	=> ___('Appears on 404 no found page in the sidebar.'),
-			],
-		];
-		foreach($sidebar as $k => $v){
-			register_sidebar([
-				'id'				=> $k,
-				'name'				=> $v['name'],
-				'description'		=> $v['description'],
-				'before_widget'		=> isset($v['before_widget']) ? $v['before_widget'] : '<aside id="%1$s"><div class="widget %2$s">',
-				'after_widget'		=> isset($v['after_widget']) ? $v['after_widget'] : '</div></aside>',
-				'before_title'		=> isset($v['before_title']) ? $v['before_title'] : '<div class="heading "><h2 class="widget-title">',
-				'after_title'		=> isset($v['after_title']) ? $v['after_widget'] : '</h2></div>',
-			]);
-		}
-	}
-	public static function get_posts_query(array $args = [],array $query_args = []){
-		global $paged;
-		$args = array_merge([
-			'orderby' => 'views',
-			'order' => 'desc',
-			'posts_per_page' => theme_cache::get_option('posts_per_page'),
-			'paged' => 1,
-			'category__in' => [],
-			'date' => 'all',
-			
-		],$args);
-		
-		$query_args = array_merge([
-			'posts_per_page' => $args['posts_per_page'],
-			'paged' => $args['paged'],
-			'ignore_sticky_posts' => true,
-			'category__in' => $args['category__in'],
-			'post_status' => 'publish',
-			'post_type' => 'post',
-			'has_password' => false,
-		],$query_args);
-		
-		switch($args['orderby']){
-			case 'views':
-				$query_args['meta_key'] = 'views';
-				$query_args['orderby'] = 'meta_value_num';
-				break;
-			case 'thumb-up':
-			case 'thumb':
-				$query_args['meta_key'] = 'post_thumb_count_up';
-				$query_args['orderby'] = 'meta_value_num';
-				break;
-			case 'rand':
-			case 'random':
-				$query_args['orderby'] = 'rand';
-				break;
-			case 'latest':
-				$query_args['orderby'] = 'date';
-				break;
-			case 'comment':
-				$query_args['orderby'] = 'comment_count';
-				break;
-			case 'recomm':
-			case 'recommended':
-				if(class_exists('theme_recommended_post')){
-					$query_args['post__in'] = (array)theme_recommended_post::get_ids();
-				}else{
-					$query_args['post__in'] = (array)theme_cache::get_option( 'sticky_posts' );
-					unset($query_args['ignore_sticky_posts']);
-				}
-				unset($query_args['post__not_in']);
-				break;
-			default:
-				$query_args['orderby'] = 'date';
-		}
-		if($args['date'] && $args['date'] != 'all'){
-			/** 
-			 * date query
-			 */
-			switch($args['date']){
-				case 'daily' :
-					$after = 'day';
-					break;
-				case 'weekly' :
-					$after = 'week';
-					break;
-				case 'monthly' :
-					$after = 'month';
-					break;
-				default:
-					$after = 'day';
-			}
-			$query_args['date_query'] = [[
-				'column' => 'post_date_gmt',
-				'after'  => '1 ' . $after . ' ago',
-			]];
-		}
-		return new WP_Query($query_args);
-	}
-	public static function archive_card_text(array $args = []){
-		global $post;
-		$args = array_merge([
-			'classes' => '',
-			'lazyload' => true,
-			'target' => theme_functions::$link_target,
-			'children' => 3,
-		]);
-		$args['classes'] .= ' card text ';
-		$thumbnail_real_src = theme_functions::get_thumbnail_src($post->ID);
-		$post_title = theme_cache::get_the_title($post->ID);
-		?>
-		<article class="<?= $args['classes'];?>">
-			<div class="card-bg">
-				<div class="media">
-					<a 
-						class="media-left" 
-						href="<?= theme_cache::get_author_posts_url($post->post_author);?>" 
-						class="meta author" 
-						title="<?= $author_display_name;?>" 
-						target="<?= $args['target'];?>" 
-					>
-						<img src="<?= theme_functions::$avatar_placeholder;?>" data-src="<?= theme_cache::get_avatar_url($post->post_author);?>" alt="avatar" width="48" height="48" class="avatar"> 
-					</a>
-					<div class="media-body">
-						<a title="<?= $post_title;?>" class="media-heading" href="<?= theme_cache::get_permalink($post->ID);?>" target="<?= $args['target'];?>" >
-							<h3 class="title"><?= $post_title;?></h3>
-						</a>
-						<div class="media-excerpt">
-							<time class="time meta" datetime="<?= get_the_time('Y-m-d H:i:s',$post->ID);?>" title="<?= get_the_time(___('M j, Y'),$post->ID);?>">
-								<i class="fa fa-clock-o"></i> <?= friendly_date(get_the_time('U',$post->ID));?>
-							</time>
-
-							<!-- author -->
-							<a 
-								href="<?= theme_cache::get_author_posts_url($post->post_author);?>" 
-								class="meta author" 
-								title="<?= $author_display_name;?>" 
-								target="<?= $args['target'];?>" 
-							><i class="fa fa-user"></i> <?= theme_cache::get_the_author_meta('display_name',$post->post_author);?></a>
-
-							<!-- views -->
-							<?php if(class_exists('theme_post_views') && theme_post_views::is_enabled()){ ?>
-								<span class="view meta">
-									<i class="fa fa-play-circle"></i> 
-									<?= theme_post_views::get_views();?>
-								</span>
-							<?php } ?>
-						</div>
-					</div>
-				</div><!-- .media -->
-				<a href="<?= theme_cache::get_permalink($post->ID);?>" class="thumbnails" target="<?= $args['target'];?>">
-					<?php
-					/** get children */
-					echo self::get_attachments_html([
-						'numberposts' => $args['children'],
-						'inlcude' => [get_post_thumbnail_id($post->ID)],
-						'post_parent' => $post->ID,
-					]);
-					?>
-				</a>
-			</div>
-		</article>
-		<?php
-	}
-	public static function get_attachments_html(array $args, $expire = 3600){
-		$args = array_merge([
-			'post_status' => 'inherit',
-			'post_type' => 'attachment',
-			'order' => 'ASC',
-		],$args);
-		$cache_id = md5(json_encode($args));
-		$cache = theme_cache::get($cache_id);
-		if($cache){
-			return $cache;
-		}
-		$children = get_children($args);
-		$children = array_values($children);
-		if($children){
-			ob_start();
-			?>
-			<div class="row">
-			<?php
-			foreach($children as $child){
-				$child_img = wp_get_attachment_image_src($child->ID, 'thumbnail');
-				?>
-				<div class="g-phone-1-<?= $args['children'];?>">
-					<?php if($args['lazyload']){ ?>
-						<img class="thumbnail" src="<?= theme_functions::$thumbnail_placeholder;?>" data-src="<?= $child_img[0];?>" alt="<?= $post_title;?>" width="<?= self::$thumbnail_size[1];?>" height="<?= self::$thumbnail_size[2];?>" >
-					<?php }else{ ?>
-						<img class="thumbnail" src="<?= $child_img[0];?>" alt="<?= $post_title;?>" width="<?= self::$thumbnail_size[1];?>" height="<?= self::$thumbnail_size[2];?>" >
-					<?php } ?>
-				</div>
-				<?php
-			}/** end loop */
-			?>
-			</div>
-			<?php
-			$cache = html_minify(ob_get_contents());
-			ob_end_clean();
-			theme_cache::set($cache_id,$cache,null,$expire);
-			return $cache;
-		}
-	}
-	/**
-	 * archive_card_xs
-	 *
-	 * @return
-	 * @version 1.0.0
-	 */
-	public static function archive_card_xs(array $args = []){
-		global $post;
-		$args = array_merge([
-			'classes' => 'g-desktop-1-2',
-			'lazyload' => true,
-			'target' => theme_functions::$link_target,
-		],$args);
-
-		$args['classes'] .= ' card xs ';
-			
-		$thumbnail_real_src = theme_functions::get_thumbnail_src($post->ID);
-		$post_title = theme_cache::get_the_title($post->ID);
-		?>
-		<article class="<?= $args['classes'];?>">
-			<a 
-			class="card-bg" 
-			href="<?= theme_cache::get_permalink($post->ID);?>" 
-			title="<?= $post_title;?>" 
-			target="<?= $args['target'];?>" 
-			>
-				<div class="thumbnail-container">
-					<?php
-					/**
-					 * lazyload img
-					 */
-					if($args['lazyload']){
-						?>
-						<img class="thumbnail" src="<?= theme_functions::$thumbnail_placeholder;?>" data-src="<?= $thumbnail_real_src;?>" alt="<?= $post_title;?>" width="<?= self::$thumbnail_size[1];?>" height="<?= self::$thumbnail_size[2];?>" >
-					<?php }else{ ?>
-						<img class="thumbnail" src="<?= $thumbnail_real_src;?>" alt="<?= $post_title;?>" width="<?= self::$thumbnail_size[1];?>" height="<?= self::$thumbnail_size[2];?>" >
-					<?php } ?>
-				</div>
-				<h3 class="title"><?= $post_title;?></h3>
-			</a>
-		</article>
-		<?php
-	}
-	public static function archive_tx_content($args = []){
-		global $post;
-		$args = array_merge([
-			'classes'			=> '',
-			'meta_type'			=> 'latest',
-		],$args);
-		
-		$post_title =  theme_cache::get_the_title($post->ID);
-		?>
-		<li class="<?= $args['classes'];?>">
-			<a href="<?= theme_cache::get_permalink($post->ID);?>" title="<?=$post_title;?>">
-				<?= $post_title;?>
-			</a>
-		</li>
-		<?php
-	}
-	
-	public static function widget_rank_tx_content($args){
-		self::archive_tx_content($args);
-	}
-	public static function widget_rank_img_content($args = []){
-		global $post;
-		
-		$args = array_merge([
-			'classes' => '',
-			'lazyload' => true,
-			'excerpt' => false,
-			'target' => theme_functions::$link_target,
-		],$args);
-
-		$thumbnail_real_src = theme_functions::get_thumbnail_src($post->ID);
-		$post_title = theme_cache::get_the_title($post->ID);
-
-		?>
-		<li class="list-group-item <?= $args['classes'];?>">
-			<a 
-				class="list-group-item-bg media" 
-				href="<?= theme_cache::get_permalink($post->ID);?>" 
-				title="<?= $post_title;?>" 
-				target="<?= $args['target'];?>" 
-			>
-				<div class="media-left">
-					<div class="thumbnail-container">
-						<img 
-							class="thumbnail" 
-							src="<?= theme_functions::$thumbnail_placeholder;?>" 
-							data-src="<?= $thumbnail_real_src;?>" 
-							alt="<?= $post_title;?>" 
-							width="<?= theme_functions::$thumbnail_size[1];?>" 
-							height="<?= theme_functions::$thumbnail_size[2];?>" 
-						>
-					</div>
-				</div>
-				<div class="media-body">
-					<h3 class="media-heading"><?= $post_title;?></h3>
-					<div class="metas row">
-						<?php if(class_exists('theme_post_views') && theme_post_views::is_enabled()){ ?>
-							<div class="view meta g-phone-1-2">
-								<i class="fa fa-play-circle"></i> 
-								<?= theme_post_views::get_views();?>
-							</div>
-						<?php } ?>
-
-						<div class="comments meta g-phone-1-2">
-							<i class="fa fa-comment"></i> 
-							<?= (int)$post->comment_count;?>
-						</div>
-					</div>
-				</div>			
-			</a>
-		</li>
-		<?php
-	}
-	public static function page_content($args = []){
-		global $post;
-
-		$args = array_merge(array(
-			'classes'			=> '',
-			'lazyload'			=> true,
-			
-		),$args);
-		
-		/** 
-		 * classes
-		 */
-		$args['classes'] .= ' singular-post panel ';
-
-		$author_display_name = theme_cache::get_the_author_meta('display_name',$post->post_author);
-
-		$author_url = theme_cache::get_author_posts_url($post->post_author);
-		?>
-		<article id="post-<?= $post->ID;?>" <?php post_class($args['classes']);?>>
-			<h2 class="entry-title"><?= theme_cache::get_the_title($post->ID);?></h2>
-			
-			<div class="entry-body">
-				
-				<!-- post-content -->
-				<div class="entry-content content-reset">
-					<?php the_content();?>
-				</div>
-
-				<?php self::the_page_pagination();?>
-
-				<!-- entry-circle -->
-				<div class="entry-circle">
-					<a class="meta meta-post-comments" href="<?= $post->comment_count == 0 ? '#respond' : '#comments' ;?>" id="post-comments-btn" title="<?= ___('Comments');?>">
-						<div id="post-comments-number-<?= $post_id;?>" class="number">
-							<?= (int)$post->comment_count;?>
-						</div>
-						<div class="tx"><?= ___('Comments');?></div>
-					</a>
-				</div>
-				
-				<!-- post-footer -->
-				<footer class="entry-footer">
-					<?php
-					/** 
-					 * post-share
-					 */
-					if(class_exists('theme_post_share') && theme_post_share::is_enabled()){
-						?>
-						<div class="entry-share">
-							<?= theme_post_share::display();?>
-						</div>
-						<?php
-					} /** end post-share */
-					?>
-				</footer>
-			</div><!-- /.entry-body -->
-		</article>
-		<?php
-	}
-	/** 
-	 * singular_content
-	 */
-	public static function singular_content(array $args = []){
-		global $post;
-
-		$args = array_merge(array(
-			'classes'			=> '',
-			'lazyload'			=> true,
-			
-		),$args);
-		
-		/** 
-		 * classes
-		 */
-		$args['classes'] .= ' singular-post panel ';
-
-		$author_display_name = theme_cache::get_the_author_meta('display_name',$post->post_author);
-
-		$author_url = theme_cache::get_author_posts_url($post->post_author);
-		?>
-		<article id="post-<?= $post->ID;?>" <?php post_class($args['classes']);?>>
-			<h2 class="entry-title"><?= theme_cache::get_the_title($post->ID);?></h2>
-			<header class="entry-header">
-				<!-- category -->
-				<?php
-				$cats = get_the_category_list('<i class="split"> / </i> ');
-				if(!empty($cats)){
-					?>
-					<span class="entry-meta post-category" title="<?= ___('Category');?>">
-						<i class="fa fa-folder-open"></i>
-						<?= $cats;?>
-					</span>
-				<?php } ?>
-				
-				<!-- time -->
-				<time class="entry-meta post-time" datetime="<?= get_the_time('Y-m-d H:i:s');?>" title="<?= get_the_time(___('M j, Y'));?>">
-					<i class="fa fa-clock-o"></i>
-					<?= friendly_date(get_the_time('U'));?>
-				</time>
-				<!-- author link -->
-				<a class="entry-meta post-author" href="<?= $author_url;?>" title="<?= sprintf(___('Views all post by %s'),$author_display_name);?>">
-					<i class="fa fa-user"></i> 
-					<?= $author_display_name;?>
-				</a>
-				
-				<!-- views -->
-				<?php if(class_exists('theme_post_views') && theme_post_views::is_enabled()){ ?>
-					<span class="entry-meta post-views" title="<?= ___('Views');?>">
-						<i class="fa fa-play-circle"></i>
-						<span class="number" id="post-views-number-<?= $post->ID;?>">-</span>
-					</span>
-				<?php } ?>
-				<?php
-				/** 
-				 * comment
-				 */
-				$comment_count = (int)get_comments_number() . '';
-				?>
-				<a href="#comments" class="entry-meta quick-comment comment-count" data-post-id="<?= $post->ID;?>">
-					<i class="fa fa-comment"></i>
-					<span class="comment-count-number"><?= $comment_count;?></span>
-				</a>
-				<?php
-				/**
-				 * edit
-				 */
-				if(class_exists('theme_custom_edit') &&  $post->post_author == theme_cache::get_current_user_id()){
-					?>
-					<a class="post-meta edit-post" href="<?= theme_custom_edit::get_edit_post_link($post->ID);?>">
-						<i class="fa fa-edit"></i> <?= ___('Edit');?>
-					</a>
-				<?php } ?>
-				
-				
-			</header>
-			<div class="entry-body">
-				<?php
-				/**
-				 * ad
-				 */
-				if(class_exists('theme_adbox') && !empty(theme_adbox::display_frontend('below-post-title'))){
-					?>
-					<div class="ad-container ad-below-post-title"><?= theme_adbox::display_frontend('below-post-title');?></div>
-					<?php
-				}
-				?>
-				<!-- entry-excerpt -->
-				<?php 
-				$excerpt = $post->post_excerpt;
-				if($excerpt !== ''){ 
-					?>
-					<blockquote class="entry-excerpt">
-						<?= $excerpt;?>
-					</blockquote>
-				<?php } ?>
-				<!-- post-content -->
-				<div class="entry-content content-reset">
-					<?php the_content();?>
-				</div>
-
-				<?php self::the_page_pagination();?>
-
-				<!-- entry-circle -->
-				<div class="entry-circle">
-					<?php
-					/** post points */
-					if(class_exists('custom_post_point') && class_exists('theme_custom_point')){
-						custom_post_point::post_btn($post->ID);
-					}
-					
-					/** theme_custom_storage */
-					if(class_exists('theme_custom_storage') && theme_custom_storage::is_enabled()){
-						theme_custom_storage::display_frontend($post->ID);
-					}
-					
-					?>
-					<a class="meta meta-post-comments" href="<?= $post->comment_count == 0 ? '#respond' : '#comments' ;?>" id="post-comments-btn" title="<?= ___('Comments');?>">
-						<div id="post-comments-number-<?= $post_id;?>" class="number">
-							<?= (int)$post->comment_count;?>
-						</div>
-						<div class="tx"><?= __x('Comments','Tucao');?></div>
-					</a>
-				</div>
-				
-				<!-- theme_custom_post_source -->
-				<?php if(class_exists('theme_custom_post_source') && theme_custom_post_source::is_enabled()){?>
-					<ul class="entry-source">
-						<?php theme_custom_post_source::display_frontend($post->ID);?>
-					</ul>
-					<?php } ?>
-					
-				<!-- post-footer -->
-				<footer class="entry-footer">
-					<?php
-					/** 
-					 * tags
-					 */
-					$tags = get_the_tags();
-					if(!empty($tags)){
-						?>
-						<div class="entry-tags">
-							<?php the_tags('',''); ?>
-						</div>
-						<?php
-					}
-					?>
-					<?php
-					/** 
-					 * post-share
-					 */
-					if(class_exists('theme_post_share') && theme_post_share::is_enabled()){
-						?>
-						<div class="entry-share">
-							<?= theme_post_share::display();?>
-						</div>
-						<?php
-					} /** end post-share */
-					?>
-
-					<?php
-					/**
-					 * report
-					 */
-					if(class_exists('theme_custom_report') && theme_custom_report::is_enabled()){
-						?>
-						<div class="entry-report">
-							<?= theme_custom_report::display_frontend();?>
-						</div>
-						<?php
-					}
-					?>
-				</footer>
-			</div><!-- /.entry-body -->
-			
-		</article>
-		<?php
-	}
-	/**
-	 * get_thumbnail_src
-	 *
-	 * @return 
-	 * @version 1.1.0
-	 */
-	public static function get_thumbnail_src($post_id,$size = 'thumbnail',$placeholder = null){
-		
-		if(!$placeholder)
-			$placeholder = self::$thumbnail_placeholder;
-			
-		if(!$size)
-			$size = self::$thumbnail_size[0];
-
-		$src = null;
-		
-		if(has_post_thumbnail($post_id)){
-			$src = wp_get_attachment_image_src(get_post_thumbnail_id($post_id),$size)[0];
-		}
-
-		/** get img src from post content */
-		if(!$src){
-			$post = theme_cache::get_post($post_id);
-			$src = $post ? get_img_source($post->post_content) : false;
-			unset($post);
-		}
-
-		if(!$src)
-			$src = $placeholder;
-		
-		return esc_url($src);
-	}
-   /**
-	 * get_crumb
-	 * 
-	 * 
-	 * @return string The html code
-	 * @version 2.0.7
-	 * 
-	 */
-	public static function get_crumb(array $args = []){
-		$args = array_merge([
-			'header' => null,
-			'footer' => null,
-		],$args);
-		
-		$links = [];
-		
-		if(theme_cache::is_home())
-			return null;
-		
-		$links['home'] = '<a href="' . theme_cache::home_url() . '" class="home" title="' . ___('Back to Homepage') . '">
-			<i class="fa fa-home fa-fw"></i>
-			<span class="tx">' . ___('Back to Homepage') . '</span>
-		</a>';
-		
-		$split = '<span class="split"><i class="fa fa-angle-right"></i></span>';
-		
-		/* category */
-		if(theme_cache::is_category()){
-			$cat_curr = theme_features::get_current_cat_id();
-			if($cat_curr > 1){
-				$links_cat = get_category_parents($cat_curr,true,'%split%');
-				$links_cats = explode('%split%',$links_cat);
-				array_pop($links_cats);
-				$links['category'] = implode($split,$links_cats);
-				$links['curr_text'] = ___('Category Browser');
-			}
-		/* tag */
-		}else if(theme_cache::is_tag()){
-			$tag_id = theme_features::get_current_tag_id();
-			$tag_obj = get_tag($tag_id);
-			$links['tag'] = '<a href="'. esc_url(get_tag_link($tag_id)).'">' . esc_html(theme_features::get_current_tag_name()).'</a>';
-			$links['curr_text'] = ___('Tags Browser');
-			/* date */
-		}else if(theme_cache::is_date()){
-			global $wp_query;
-			$day = $wp_query->query_vars['day'];
-			$month = $wp_query->query_vars['monthnum'];
-			$year = $wp_query->query_vars['year'];
-			/* day */
-			if(theme_cache::is_day()){
-				$date_link = get_day_link(null,null,$day);
-			/* month */
-			}else if(theme_cache::is_month()){
-				$date_link = get_month_link($year,$month);
-			/* year */
-			}else if(theme_cache::is_year()){
-				$date_link = get_year_link($year);
-			}
-			$links['date'] = '<a href="'.$date_link.'">' . theme_cache::wp_title('',false).'</a>';
-			$links['curr_text'] = ___('Date Browser');
-		/* search*/
-		}else if(theme_cache::is_search()){
-			// $nav_link = null;
-			$links['curr_text'] = sprintf(___('Search Result: %s'),esc_html(get_search_query()));
-		/* author */
-		}else if(theme_cache::is_author()){
-			global $author;
-			$user = get_user_by('id',$author);
-			$links['author'] = '<a href="'.theme_cache::get_author_posts_url($author).'">' . theme_cache::get_the_author_meta('display_name',$user->ID) . '</a>';
-			$links['curr_text'] = ___('Author posts');
-		/* archive */
-		}else if(theme_cache::is_archive()){
-			$links['archive'] = '<a href="'.get_current_url().'">' . theme_cache::wp_title('',false) . '</a>';
-			$links['curr_text'] = ___('Archive Browser');
-		/* Singular */
-		}else if(theme_cache::is_singular()){
-			global $post;
-			/* The page parent */
-			if($post->post_parent){
-				$links['singular'] = '<a href="' . theme_cache::get_permalink($post->post_parent) . '">' . theme_cache::get_the_title($post->post_parent) . '</a>';
-			}
-			/**
-			 * post / page
-			 */
-			if(theme_features::get_current_cat_id() > 1){
-				$categories = get_the_category($post->ID);
-				foreach ($categories as $key => $row) {
-					$parent_id[$key] = $row->category_parent;
-				}
-				array_multisort($parent_id, SORT_ASC,$categories);
-				foreach($categories as $cat){
-					$cat_name = esc_html($cat->name);
-					$links['singular'] = '<a href="' . esc_url(get_category_link($cat->cat_ID)) . '" title="' . sprintf(___('View all posts in %s'),$cat_name) . '">' . $cat_name . '</a>';
-				}
-			}
-			//$links['curr_text'] = esc_html(theme_cache::get_the_title($post->ID));
-		/* 404 */
-		}else if(theme_cache::is_404()){
-			// $nav_link = null;
-			$links['curr_text'] = ___('Not found');
-		}
-	
-	return '<div class="crumb-container">
-		' . $args['header'] . '
-		<nav class="crumb">
-			' . implode($split,apply_filters('crumb_links',$links)) . '
-		</nav>
-		' . $args['footer'] . '
-	</div>';
-	}
-	/**
-	 * get_post_pagination
-	 * show pagination in archive or searching page
-	 * 
-	 * @param string The class of molude
-	 * @return string
-	 * @version 1.0.1
-	 * 
-	 */
-	public static function get_post_pagination( $class = 'posts-pagination') {
-		global $wp_query,$paged;
-		if ( $wp_query->max_num_pages > 1 ){
-			$big = 9999999;
-			$args = array(
-				'base'			=> str_replace( $big, '%#%', get_pagenum_link( $big ) ),
-				'echo'			=> false, 
-				'current' 		=> max( 1, get_query_var('paged') ),
-				'prev_text'		=> ___('&laquo;'),
-				'next_text'		=> ___('&raquo;'),
-				'total'			=> $wp_query->max_num_pages,
-			);
-			$posts_page_links = paginate_links($args);
-			
-			$output = '<nav class="'.$class.'">'.$posts_page_links.'</nav>';
-			return $output;
-		}
-	}
-	public static function pagination( array $args = [] ) {
-		
-		$args = array_merge([
-			'custom_query'		=> false,
-			'previous_string' 	=> '<i class="fa fa-arrow-left"></i>',
-			'next_string'	 	=> '<i class="fa fa-arrow-right"></i>',
-			'before_output'   	=> '<div class="pager" aria-label="' . ___('Posts pagination navigation') . '">',
-			'after_output'		=> '</div>'
-		],$args);
-
-		$rand_id = rand(1000,9999);
-		
-		if ( !$args['custom_query'] )
-			$args['custom_query'] = @$GLOBALS['wp_query'];
-			
-		$count = (int) $args['custom_query']->max_num_pages;
-		$page  = intval( get_query_var( 'paged' ) );
-	
-		if ( $count <= 1 )
-			return false;
-		
-		if ( !$page )
-			$page = 1;
-	   
-		/**
-		 * output before_output;
-		 */
-		echo $args['before_output'];
-		
-		/**
-		 * prev page
-		 */
-		if ( $page > 1 ){
-			$previous = intval($page) - 1;
-			$previous_url = get_pagenum_link($previous);
-			
-		   echo '<a class="prev" href="' . esc_url($previous_url) . '" title="' . ___( 'Previous page') . '">' . $args['previous_string'] . '</a>';
-		}
-		/**
-		 * middle
-		 */
-		if ( $count > 1 ) {
-			?>
-			<label for="pagination-<?= $rand_id;?>" class="middle">
-				<select id="pagination-<?= $rand_id;?>" class="form-control">
-					<?php
-					/**
-					 * Previous 5 page
-					 */
-					for( $i = $page - 3; $i < $page; ++$i ){
-						if($i < 1 )
-							continue;
-						?>
-						<option value="<?= esc_url(get_pagenum_link($i));?>">
-							<?= sprintf(___('Page %d'),$i);?>
-						</option>
-						<?php
-					}
-					?>
-					<option selected value="<?= esc_url( get_pagenum_link($page) );?>">
-						<?= sprintf(___('Page %d'),$page);?>
-					</option>
-					<?php
-					for( $i = $page + 1; $i < $page + 4; ++$i ) {
-						if($i > $count)
-							break;
-						?>
-						<option value="<?= esc_url(get_pagenum_link($i));?>">
-							<?= sprintf(___('Page %d'),$i);?>
-						</option>
-						<?php
-					}
-					?>
-				</select>
-			</label>
-			<?php
-		}
-		
-		/**
-		 * next page
-		 */
-		if ($page < $count ){
-			$next = intval($page) + 1;
-	   		$next_url = get_pagenum_link($next);
-			echo '<a class="next" href="' . esc_url($next_url) . '" title="' . __( 'Next page') . '">' . $args['next_string'] . '</a>';
-		}
-
-		/**
-		 * output
-		 */
-		echo $args['after_output'];
-
-	}
-	/**
-	 * get the comment pagenavi
-	 * 
-	 * 
-	 * @param string $class Class name
-	 * @param bool $below The position where show.
-	 * @return string
-	 * @version 1.0.0
-	 * 
-	 */
-	public static function get_comment_pagination(array $args = []) {
-		global $post;
-		/**
-		 * post comment status
-		 */
-		static $page_comments = null,
-			$cpp = null,
-			$thread_comments = null,
-			$max_pages = null;
-			
-		if($page_comments === null)
-			$page_comments = theme_cache::get_option('page_comments');
-		/** if comment is closed, return */
-		if(!$page_comments) 
-			return false;
-
-		/**
-		 * comments per page
-		 */
-		if(!$cpp === null)
-			$cpp = theme_cache::get_option('comments_per_page');
-
-		/**
-		 * thread_comments
-		 */
-		if($thread_comments === null)
-			$thread_comments = get_option('thread_comments');
-
-		if($max_pages === null)
-			$max_pages = get_comment_pages_count(null,get_option('comments_per_page'),theme_cache::get_option('thread_comments'));
-			
-		/** 
-		 * defaults args
-		 */
-		$defaults = [
-			'classes'			=> 'comment-pagination',
-			'cpaged'			=> max(1,get_query_var('cpage')),
-			'cpp' 				=> $cpp,
-			'thread_comments'	=> $thread_comments ? true : false,
-			// 'default_comments_page' => get_option('default_comments_page'),
-			'default_comments_page' => 'oldest',
-			'max_pages' 		=> $max_pages,
-			
-		];
-		$r = array_merge($defaults,$args);
-		extract($r,EXTR_SKIP);
-				
-		/** If has page to show me */
-		if ( $max_pages > 1 ){
-			$big = 999;
-			$args = array(
-				'base' 			=> str_replace($big,'%#%',get_comments_pagenum_link($big)), 
-				'total'			=> $max_pages,
-				'current'		=> $cpaged,
-				'echo'			=> false, 
-				'prev_text'		=> '<i class="fa fa-angle-left"></i>',
-				'next_text'   	=> '<i class="fa fa-angle-right"></i>',
-			);
-			$comments_page_links = paginate_links($args);
-			/**
-			 * add data-* attribute
-			 */
-			$comments_page_links = str_replace(
-				' href=',
-				' data-post-id="' . $post->ID . '" data-cpage="' . $cpaged . '" href=',
-				$comments_page_links
-			);
-			
-			return '<div class="'. $classes .'">'.$comments_page_links.'</div>';
-		}
-	}
-	
-	/** 
-	 * the_post_0
-	 */ 
-	public static function the_post_0(){
-		global $post;
-		?>
-		<div id="post-0"class="post no-results not-found mod">
-			<?= status_tip('info','large',___( 'Sorry, I was not able to find what you need, what about look at other content :)')); ?>
-		</div><!-- #post-0 -->
-
-	<?php
-	}
-
-	/** 
-	 * smart_page_pagination
-	 */
-	public static function smart_page_pagination($args = []){
-			
-		global $post, $page, $numpages;
-
-		$output = [];
-	
-		$args = array_merge([
-			'add_fragment' => 'post-' . $post->ID,
-			'same_category' => false,
-		],$args);
-		
-		$output['numpages'] = $numpages;
-		$output['page'] = $page;
-		
-		/** rand posts */
-		$get_rand_post = function(){
-			$query = theme_functions::get_posts_query([
-				'posts_per_page' => 1,
-				'ignore_sticky_posts' => true,
-				'post_type' => 'post',
-				'orderby' => 'rand',
-			]);
-			return $query->have_posts() ? $query->posts[0] : false;
-		};
-		/** 
-		 * prev post
-		 */
-		$prev_post = get_previous_post(true);
-		
-		if(!$prev_post && $args['same_category'] === false)
-			$prev_post = get_previous_post();
-			
-		/** random */
-		if(!$prev_post){
-			$prev_post = $get_rand_post();
-			$output['rand'] = 'prev-post';
-		}
-			
-		if($prev_post){
-			$output['prev_post'] = $prev_post;
-		}
-		/** 
-		 * next post
-		 */
-		$next_post = get_next_post(true);
-
-		if(!$next_post && $args['same_category'] === false)
-			$next_post = get_next_post();
-		/** random */
-		if(!$next_post){
-			$next_post = $get_rand_post();
-			$output['rand'] = 'next-post';
-		}
-			
-		if($next_post){
-			$output['next_post'] = $next_post;
-		}		
-		/** 
-		 * exists multiple page
-		 */
-		if($numpages != 1){
-			/** 
-			 * if has prev page
-			 */
-			if($page > 1){
-				$prev_page_number = $page - 1;
-				$output['prev_page']['url'] = theme_features::get_link_page_url($prev_page_number,$args['add_fragment']);
-				$output['prev_page']['number'] = $prev_page_number;
-			}
-			/** 
-			 * if has next page
-			 */
-			if($page < $numpages){
-				$next_page_number = $page + 1;
-				$output['next_page']['url'] = theme_features::get_link_page_url($next_page_number,$args['add_fragment']);
-				$output['next_page']['number'] = $next_page_number;
-			}
-		}
-		//var_dump($output);
-		return array_filter($output);
-	}
-
-	
-	public static function the_page_pagination(){
-		global $post,$page,$numpages;
-		$cache_id = $post->ID . $page . $numpages;
-		$cache_group = 'page-pagi';
-
-		$cache = theme_cache::get($cache_id,$cache_group);
-		if(!empty($cache)){
-			echo $cache;
-			unset($cache);
-			return;
-		}
-		$page_pagination = self::smart_page_pagination([
-			'same_category' => true,
-		]);
-		
-		if(!isset($page_pagination['numpages']) || $page_pagination['numpages'] <= 1)
-			return false;
-			
-		ob_start();
-		?>
-		<nav class="page-pagination">
-			<?php
-			$page_attr_str = $page_pagination['page'] . '/' . $page_pagination['numpages'];
-			$page_str = '<span class="current-page">' . $page_pagination['page'] . '</span>' . '/' . $page_pagination['numpages'];
-			if(isset($page_pagination['prev_page'])){
-				?>
-				<a 
-					href="<?= $page_pagination['prev_page']['url'];?>" 
-					class="prev" 
-					title="<?= ___('Previous page');?> <?= $page_attr_str;?>" 
-					data-number="<?= $page - 1;?>" 
-				><i class="fa fa-chevron-left"></i><span class="tx"><?= ___('Previous page');?> <?= $page_str;?></span></a>
-				<?php
-			}else{
-				?>
-				<a 
-					href="javascript:;" 
-					class="prev" 
-					title="<?= ___('Previous page');?> <?= $page_attr_str;?>" 
-					data-number="1" 
-				><i class="fa fa-chevron-left"></i><span class="tx"><?= ___('Previous page');?> <?= $page_str;?></span></a>
-				<?php
-			}
-			if(isset($page_pagination['next_page'])){
-				?>
-				<a 
-					href="<?= $page_pagination['next_page']['url'];?>" 
-					class="next" 
-					title="<?= ___('Next page');?> <?= $page_attr_str;?>" 
-				><span class="tx"><?= $page_str;?> <?= ___('Next page');?></span><i class="fa fa-chevron-right"></i></a>
-				<?php
-			}else{
-				?>
-				<a 
-					href="javascript:;" 
-					class="next" 
-					title="<?= ___('Next page');?> <?= $page_attr_str;?>" 
-				><span class="tx"><?= $page_str;?> <?= ___('Next page');?></span><i class="fa fa-chevron-right"></i></a>
-				<?php
-			}
-		?>
-		</nav>
-		<?php
-		$cache = html_minify(ob_get_contents());
-		ob_end_clean();
-
-		theme_cache::set($cache_id,$cache,$cache_group,3600);
-		echo $cache;	
-		unset($cache);
-		
-	}
-	public static function adjacent_posts(){
-		global $post,$page;
-		$cache_id = $post->ID . $page;
-		$cache_group = 'post-pagi';
-
-		$cache = theme_cache::get($cache_id,$cache_group);
-		if(!empty($cache)){
-			echo $cache;
-			unset($cache);
-			return;
-		}
-			
-		$prev_next_pagination = self::smart_page_pagination([
-			'same_category' => true,
-		]);
-		
-		$has_prev = isset($prev_next_pagination['next_post']) ? 'has-prev' : 'no-prev';
-
-		$has_next = isset($prev_next_pagination['prev_post']) ? 'has-next' : 'no-next';
-		
-		$prev_url = null;
-		$next_url = null;
-		
-		ob_start();
-		?>
-		<nav class="adjacent-posts <?= $has_prev;?> <?= $has_next;?> row">
-		<div class="g-desktop-1-2">
-			<?php
-			/**
-			 * prev
-			 */
-			if(isset($prev_next_pagination['next_post'])){
-				$prev_url = theme_cache::get_permalink($prev_next_pagination['next_post']->ID);
-				$prev_title = theme_cache::get_the_title($prev_next_pagination['next_post']->ID);
-				$title = isset($prev_next_pagination['rand']) && $prev_next_pagination['rand'] === 'next-post' ? ___('Random: %s') : ___('Previous post: %s');
-				?>
-				<a href="<?= $prev_url;?>#post-<?= $prev_next_pagination['next_post']->ID;?>" class="left next-post" title="<?= $prev_title;?>">
-					<img class="thumbnail" src="<?= self::$thumbnail_placeholder;?>" data-src="<?= self::get_thumbnail_src($prev_next_pagination['next_post']->ID);?>" alt="<?= $prev_title ;?>" width="<?= self::$thumbnail_size[1];?>" height="<?= self::$thumbnail_size[2];?>">
-					<h2 class="title"><i class="fa fa-arrow-circle-left"></i> <?= sprintf($title,$prev_title);?></h2>
-				</a>
-				<?php
-			}
-			?>
-			</div>
-			<div class="g-desktop-1-2">
-			<?php
-			/**
-			 * next
-			 */
-			if(isset($prev_next_pagination['prev_post'])){
-				$next_url = theme_cache::get_permalink($prev_next_pagination['prev_post']->ID);
-				$next_title = theme_cache::get_the_title($prev_next_pagination['prev_post']->ID);
-				$title = isset($prev_next_pagination['rand']) && $prev_next_pagination['rand'] === 'prev-post' ? ___('Random: %s') : ___('Next post: %s');
-				?>
-				<a href="<?= $next_url;?>#post-<?= $prev_next_pagination['prev_post']->ID;?>" class="right prev-post" title="<?= $next_title;?>">
-					<img class="thumbnail" src="<?= self::$thumbnail_placeholder;?>" data-src="<?= self::get_thumbnail_src($prev_next_pagination['prev_post']->ID);?>" alt="<?= $next_title ;?>" width="<?= self::$thumbnail_size[1];?>" height="<?= self::$thumbnail_size[2];?>">
-					<h2 class="title"><i class="fa fa-arrow-circle-right"></i> <?= sprintf($title,$next_title);?></h2>
-				</a>
-				<?php
-			}
-			?>
-		</div>
-		</nav>
-		<?php
-		$cache = html_minify(ob_get_contents());
-		ob_end_clean();
-
-		theme_cache::set($cache_id,$cache,$cache_group,3600);
-		echo $cache;
-		unset($cache);
-	}
-
-
-	public static function theme_comment( $comment, $args, $depth ) {
-		global $post;
-		
-		$GLOBALS['comment'] = $comment;
-
-		switch ( $comment->comment_type ){
-			default :
-				$classes = ['media'];
-				
-				if(!empty( $args['has_children'])) 
-					$classes[] = 'parent';
-					
-				if($comment->comment_approved == '0') 
-					$classes[] = 'moderation';
-
-				/**
-				 * post author checker
-				 */
-				if($comment->user_id == $post->post_author){
-					$is_post_author = true;
-					$classes[] = 'is-post-author';
-				}else{
-					$is_post_author = false;
-				}
-
-				/**
-				 * check is my comment
-				 */
-				if($comment->user_id != 0){
-					if(theme_cache::get_current_user_id() == $comment->user_id)
-						$classes[] = 'is-me';
-				}
-
-				/**
-				 * author url
-				 */
-				$author_url = get_comment_author_url();
-				if(!empty($author_url) && stripos($author_url,theme_cache::home_url()) === false){
-					$author_nofollow = ' rel="external nofollow" ';
-				}else{
-					$author_nofollow = null;
-				}
-				?>
-<li <?php comment_class($classes);?> id="comment-<?= $comment->comment_ID;?>">
-	<div id="comment-body-<?= $comment->comment_ID; ?>" class="comment-body">
-	
-		<?php if($comment->comment_parent == 0){ ?>
-			<div class="media-left">
-				<?php if($author_url){ ?>
-					<a href="<?= esc_url($author_url);?>" class="avatar-link" target="_blank" <?= $author_nofollow;?> >
-						<?= theme_cache::get_avatar($comment,50);?>
-					</a>
-				<?php }else{
-					echo theme_cache::get_avatar($comment,50);
-				} ?>
-			</div><!-- /.media-left -->
-		<?php } ?>
-		
-		<div class="media-body">
-
-			<div class="comment-content">
-				<?php comment_text();?>
-				<?php if ($comment->comment_approved == '0'){ ?>
-					<div class="comment-awaiting-moderation"><?= status_tip('info',___('Your comment is awaiting moderation.')); ?></div>
-				<?php } ?>
-			</div>
-
-			<h4 class="media-heading">
-				<span class="comment-meta-data author">
-					<?php
-					if($comment->comment_parent != 0){
-						echo theme_cache::get_avatar($comment,50), '&nbsp;';
-					}
-					comment_author_link();
-					?>
-				</span>
-				<time class="comment-meta-data time" datetime="<?= get_comment_time('c');?>">
-					<a href="<?= esc_url(get_comment_link( $comment->comment_ID));?>"><?= friendly_date(get_comment_time('U')); ?></a>
-				</time>
-				<?php
-				if(!theme_cache::is_user_logged_in()){
-					/**
-					 * if needs register to comment
-					 */
-					if(theme_cache::get_option('comment_registration')){
-						static $reply_link;
-						if(!$reply_link)
-							$reply_link = '<a rel="nofollow" class="comment-reply-login quick-login-btn" href="' . wp_login_url(theme_cache::get_permalink($comment->comment_post_ID)) . '">' . ___('Reply') . '</a>';
-					}else{
-						$reply_link = get_comment_reply_link(
-							[
-								'add_below'		=> 'comment-body', 
-								'depth' 		=> $depth,
-								'max_depth' 	=> $args['max_depth'],
-							],
-							$comment,
-							$post->ID
-						);
-					}
-				}else{
-					$reply_link = get_comment_reply_link(
-						[
-							'add_below'		=> 'comment-body', 
-							'depth' 		=> $depth,
-							'max_depth' 	=> $args['max_depth'],
-						],
-						$comment,
-						$post->ID
-					);
-				}
-
-				$reply_link = preg_replace('/(href=)[^\s]+/','$1"javascript:;"',$reply_link);
-				if(!empty($reply_link)){
-					?>
-					<span class="comment-meta-data comment-reply reply">
-						<?= $reply_link;?>
-					</span><!-- .reply -->
-				<?php } ?>
-			</h4>
-		</div><!-- /.media-body -->
-	</div><!-- /.comment-body -->
-		<?php
-		}
-	}
-
-	public static function the_related_posts(array $args = []){
-		global $post;
-
-		$cache_group_id = 'related_posts';
-		$cache = theme_cache::get($post->ID,$cache_group_id);
-		if($cache){
-			echo $cache;
-			unset($cache);
-			return;
-		}
-		
-		$defaults = [
-			'posts_per_page' => 8,
-			'orderby' => 'latest',
-		];
-		$query_args = [
-			'post__not_in' => [$post->ID],
-		];
-		$args = array_merge($defaults,$args);
-		
-		$content_args = [
-			'classes' => ' ',
-		];
-		
-		ob_start();
-		?>
-		
-		<div class="related-posts panel">
-			<div class="heading">
-				<h3 class="title">
-					<i class="fa fa-heart-o"></i> <?= ___('Maybe you will like them');?>
-				</h3>
-			</div>
-			<div class="body">
-				<?php
-				$same_tag_args = $args;
-				$same_tag_query = $query_args;
-				/**
-				 * if post not tags, get related post from same category
-				 */
-				if(!get_the_tags()){
-					$same_tag_query['category__in'] = array_map(function($term){
-						return $term->term_id;
-					},get_the_category($post->ID));
-					$same_tag_args['orderby'] = 'random';
-				}else{
-					$same_tag_query['tag__in'] = array_map(function($term){
-						return $term->term_id;
-					},get_the_tags());
-				}
-				$query = self::get_posts_query($same_tag_args,$same_tag_query);
-				if($query->have_posts()){
-					?>
-					<div class="row">
-						<?php
-						foreach($query->posts as $post){
-							setup_postdata($post);
-							self::archive_card_xs($content_args);
-						}
-						wp_reset_postdata();
-					?>
-					</div>
-				<?php }else{ ?>
-					<div class="page-tip"><?= status_tip('info',___('No data.'));?></div>
-				<?php
-				}
-				//wp_reset_query();
-				?>
-			</div>
-
-		</div>
-		<?php
-		$cache = ob_get_contents();
-		ob_end_clean();
-		theme_cache::set($post->ID,$cache,$cache_group_id,3600);
-		echo $cache;
-		unset($cache);
-	}
-	/**
-	 * get_page_pagenavi
-	 * 
-	 * 
-	 * @return 
-	 * @version 1.0.0
-	 * 
-	 */
-	public static function get_page_pagenavi(){
-		// var_dump( theme_features::get_pagination());
-		global $page,$numpages;
-		$output = null;
-		if($numpages < 2) return;
-		if($page < $numpages){
-			$next_page = $page + 1;
-			$output = '<a href="' . theme_features::get_link_page_url($next_page) . '" class="next_page">' . ___('Next page') . '</a>';
-		}else{
-			$prev_page = $page - 1;
-			$output = '<a href="' . theme_features::get_link_page_url($prev_page) . '" class="prev_page">' . ___('Previous page') . '</a>';
-		}
-		$output = $output ? '<div class="singular_page">' . $output . '</div>' : null;
-		$args = array(
-			'range' => 3
-		);
-		$output .= theme_features::get_pagination($args);
-		return $output;
-	}
-	/**
-	 * the_recommended
-	 */
-	public static function the_recommended(){
-		if(!class_exists('theme_recommended_post') || !theme_recommended_post::is_enabled())
-			return false;
-			
-		$cache = theme_recommended_post::get_cache();
-		
-		if(!empty($cache)){
-			echo $cache;
-			unset($cache);
-			return;
-		}
-		
-		$recomms = theme_recommended_post::get_ids();
-		
-		if(empty($recomms)){
-			?>
-			<div class="page-tip"><?= status_tip('info',___('Please set some recommended posts to display.'));?></div>
-			<?php
-			return false;
-		}
-		
-		global $post;
-		$query = new WP_Query([
-			'posts_per_page' => theme_recommended_post::get_item('number'),
-			'post__in' => $recomms,
-			'orderby' => 'ID',
-			'ignore_sticky_posts' => true,
-		]);
-		ob_start();
-		if(have_posts()){
-			?>
-			<div class="home-recomm mod panel">
-				<div class="heading">
-					<h2 class="title">
-						<span class="bg">
-						<?php if(class_exists('theme_page_rank')){ ?>
-							<a href="<?= theme_page_rank::get_tabs('recommend')['url'];?>">
-						<?php } ?>
-						<?php if(theme_recommended_post::get_item('icon')){ ?>
-							<i class="fa fa-<?= theme_recommended_post::get_item('icon');?>"></i> 
-						<?php } ?>
-						<?= theme_recommended_post::get_item('title');?>
-						<?php if(class_exists('theme_page_rank')){ ?>
-							</a>
-						<?php } ?>
-						</span>
-					</h2>
-					<?php if(class_exists('theme_page_rank')){ ?>
-						<a href="<?= theme_page_rank::get_tabs('recommend')['url'];?>" class="more"><?= ___('more &raquo;');?></a>
-					<?php } ?>
-				</div>
-				<div class="row">
-					<?php
-					foreach($query->posts as $post){
-						setup_postdata($post);
-						self::archive_card_lg([
-							'classes' => 'g-tablet-1-2 g-tablet-1-4',
-							'lazyload' => false,
-						]);
-					}
-					wp_reset_postdata();
-					?>
-				</div>
-			</div>
-			<?php
-		}
-		unset($query,$recomms);
-		$cache = ob_get_contents();
-		ob_end_clean();
-		theme_recommended_post::set_cache($cache);
-
-		echo $cache;
-		unset($cache);
-	}
-	public static function archive_card_lg(array $args = []){
-		global $post;
-		$args = array_merge([
-			'classes' => 'g-tablet-1-4',
-			'lazyload' => true,
-			'target' => theme_functions::$link_target,
-		],$args);
-
-		$args['classes'] .= ' card lg ';
-		
-		$thumbnail_real_src = theme_functions::get_thumbnail_src($post->ID);
-		$permalink = theme_cache::get_permalink($post->ID);
-		$post_title = theme_cache::get_the_title($post->ID);
-		$author_display_name = theme_cache::get_the_author_meta('display_name',$post->post_author);
-		
-		?>
-		<article class="<?= $args['classes'];?>">
-			<div class="card-bg" >
-				<a 
-					href="<?= $permalink;?>" 
-					title="<?= $post_title;?>" 
-					class="thumbnail-container" 
-					target="<?= $args['target'];?>" 
-				>
-					<?php
-					/**
-					 * lazyload img
-					 */
-					if($args['lazyload']){
-						?>
-						<img class="thumbnail" src="<?= theme_functions::$thumbnail_placeholder;?>" data-src="<?= $thumbnail_real_src;?>" alt="<?= $post_title;?>" width="<?= self::$thumbnail_size[1];?>" height="<?= self::$thumbnail_size[2];?>" >
-					<?php }else{ ?>
-						<img class="thumbnail" src="<?= $thumbnail_real_src;?>" alt="<?= $post_title;?>" width="<?= self::$thumbnail_size[1];?>" height="<?= self::$thumbnail_size[2];?>" >
-					<?php } ?>
-
-					<?php if(class_exists('theme_colorful_cats')){ ?>
-						<div class="card-cat">
-							<?php
-							/**
-							 * cats
-							 */
-							foreach(get_the_category($post->ID) as $cat){
-								$color = theme_colorful_cats::get_cat_color($cat->term_id,true);
-								?>
-								<span style="background-color:rgba(<?= $color['r'];?>,<?= $color['g'];?>,<?= $color['b'];?>,.8);"><?= $cat->name;?></span>
-							<?php } ?>
-						</div>
-					<?php } ?>
-
-				</a>
-				<a 
-					href="<?= $permalink;?>" 
-					title="<?= $post_title;?>" 
-					class="card-title" 
-					target="<?= $args['target'];?>" 
-				>
-					<h3><?= $post_title;?></h3>
-				</a>
-				<div class="card-meta">
-					<a 
-						href="<?= theme_cache::get_author_posts_url($post->post_author);?>" 
-						class="meta author" 
-						title="<?= $author_display_name;?>" 
-						target="<?= $args['target'];?>" 
-					>
-						<img width="32" height="32" src="<?= theme_functions::$avatar_placeholder;?>" data-src="<?= theme_cache::get_avatar_url($post->post_author);?>" alt="<?= $author_display_name;?>" class="avatar"> <span class="tx"><?= $author_display_name;?></span>
-					</a>
-					<?php
-					/**
-					 * views
-					 */
-					if(class_exists('theme_post_views') && theme_post_views::is_enabled()){ ?>
-						<span class="meta views" title="<?= ___('Views');?>"><i class="fa fa-play-circle"></i> <?= theme_post_views::get_views($post->ID);?></span>
-					<?php } ?>
-
-					<!-- comments count -->
-					<span class="meta comments-count" title="<?= ___('Comments');?>">
-						<i class="fa fa-comment"></i> <?= (int)$post->comment_count;?>
-					</span>
-				</div>
-			</div>
-		</article>
-		<?php
-	}
-	public static function archive_card_sm(array $args = []){
-		global $post;
-		$args = array_merge([
-			'classes' => 'g-tablet-1-4',
-			'lazyload' => true,
-			'category' => true,
-			'target' => theme_functions::$link_target,
-		],$args);
-		
-		$args['classes'] .= ' card sm ';
-		
-		$thumbnail_real_src = theme_functions::get_thumbnail_src($post->ID);
-		$permalink = theme_cache::get_permalink($post->ID);
-		$post_title = theme_cache::get_the_title($post->ID);
-		$author_display_name = theme_cache::get_the_author_meta('display_name',$post->post_author);
-		
-		?>
-		<article <?php post_class($args['classes']);?>>
-			<div class="card-bg" >
-				<?php if(class_exists('theme_colorful_cats') && $args['category']){ ?>
-					<div class="card-cat">
-						<?php
-						/**
-						 * cats
-						 */
-						foreach(get_the_category($post->ID) as $cat){
-							$color = theme_colorful_cats::get_cat_color($cat->term_id,true);
-							?>
-							<span style="background-color:rgba(<?= $color['r'];?>,<?= $color['g'];?>,<?= $color['b'];?>,.8);"><?= $cat->name;?></span>
-						<?php } ?>
-					</div>
-				<?php } ?>
-				<a 
-					href="<?= $permalink;?>" 
-					title="<?= $post_title;?>" 
-					class="thumbnail-container" 
-					target="<?= $args['target'];?>" 
-				>
-					<?php
-					/**
-					 * lazyload img
-					 */
-					if($args['lazyload']){
-						?>
-						<img 
-							class="thumbnail" 
-							src="<?= theme_functions::$thumbnail_placeholder;?>" 
-							data-src="<?= $thumbnail_real_src;?>" 
-							alt="<?= $post_title;?>" 
-							width="<?= self::$thumbnail_size[1];?>" 
-							height="<?= self::$thumbnail_size[2];?>" 
-						>
-					<?php }else{ ?>
-						<img 
-							class="thumbnail" 
-							src="<?= $thumbnail_real_src;?>" 
-							alt="<?= $post_title;?>" 
-							width="<?= self::$thumbnail_size[1];?>" 
-							height="<?= self::$thumbnail_size[2];?>" 
-						>
-					<?php } ?>
-				</a>
-				
-				<a 
-					href="<?= $permalink;?>" 
-					title="<?= $post_title;?>" 
-					class="card-title" 
-					target="<?= $args['target'];?>" 
-				>
-					<h3><?= $post_title;?></h3>
-				</a>
-				<div class="card-meta">
-					<a 
-						href="<?= theme_cache::get_author_posts_url($post->post_author);?>" 
-						class="meta author" 
-						title="<?= $author_display_name;?>" 
-						target="<?= $args['target'];?>" 
-					>
-						<img width="32" height="32" src="<?= theme_functions::$avatar_placeholder;?>" data-src="<?= theme_cache::get_avatar_url($post->post_author);?>" alt="<?= $author_display_name;?>" class="avatar"> <span class="tx"><?= $author_display_name;?></span>
-					</a>
-					<time class="meta time" datetime="<?= get_the_time('Y-m-d H:i:s',$post->ID);?>" title="<?= get_the_time(___('M j, Y'),$post->ID);?>">
-						<?= friendly_date(get_the_time('U',$post->ID));?>
-					</time>
-				</div>
-			</div>
-		</article>
-		<?php
-	}
-	public static function the_homebox(array $args = []){
-		if(!class_exists('theme_custom_homebox')) 
-			return false;
-			
-		$opt = array_filter((array)theme_custom_homebox::get_options());
-
-		/**
-		 * cache
-		 */
-		$device = wp_is_mobile() ? 'mobile' : 'desktop';
-		$sign_status = theme_cache::is_user_logged_in() ? 'login' : 'logout';
-		$cache_id = $device . $sign_status;
-		$cache = (array)theme_custom_homebox::get_cache();
-		if(isset($cache[$cache_id])){
-			echo $cache[$cache_id];
-			unset($cache);
-			return;
-		}
-
-		ob_start();
-		
-		if(empty($opt)){
-			?>
-			<div class="panel">
-				<div class="content">
-					<div class="page-tip"><?= status_tip('info',___('Please add some homebox.'));?></div>
-				</div>
-			</div>
-			<?php
-			return false;
-		}
-
-		global $post;
-		static $lazyload_i = 0;
-		foreach($opt as $k => $v){
-			
-			/** display type */
-			$display_type = isset($v['display-type']) ? $v['display-type'] : 'all';
-			
-			/** for login */
-			if($display_type === 'login' && !theme_cache::is_user_logged_in())
-				continue;
-				
-			/** for logout */
-			if($display_type === 'logout' && theme_cache::is_user_logged_in())
-				continue;
-
-				
-			if(!isset($v['title']) || trim($v['title']) === '')
-				continue;
-
-			$title = esc_html($v['title']);
-			
-			$link = isset($v['link']) && !empty($v['link']) ? esc_url($v['link']) : false;
-			?>
-<div id="homebox-<?= $k;?>" class="homebox panel mod">
-	<div class="heading">
-		<h2 class="title">
-			<span class="bg">
-				<?php if($link){ ?>
-					<a href="<?= $link;?>" title="<?= sprintf(___('More about %s'),$title);?>">
-				<?php } ?>
-				<?php if(!empty($v['icon'])){ ?>
-					<i class="fa fa-<?= $v['icon'];?>"></i> 
-				<?php } ?>
-				<?= $title;?>
-				<?php if($link){ ?>
-					</a>
-				<?php } ?>
-			</span>
-		</h2>
-		<div class="extra">
-			<?php if(!empty($v['keywords'])){ ?>
-				<div class="keywords">
-					<?php 
-					if(wp_is_mobile()){
-						$keyword_i = 0;
-						foreach(theme_custom_homebox::keywords_to_html($v['keywords']) as $kw){ 
-							if($keyword_i == 3)
-								break;
-							?>
-							<a href="<?= esc_url($kw['url']);?>"><?= $kw['name'];?></a>
-							<?php 
-							++$keyword_i;
-						}
-					}else{
-						foreach(theme_custom_homebox::keywords_to_html($v['keywords']) as $kw){ 
-							?>
-								<a href="<?= esc_url($kw['url']);?>"><?= $kw['name'];?></a>
-							<?php 
-						}
-					}
-					?>
-				</div>
-			<?php } ?>
-		</div>
-	</div>
-	<div class="row">
-		<?php
-		$query = new WP_Query([
-			'category__in' => isset($v['cats']) ? $v['cats'] : [],
-			'posts_per_page' => isset($v['number']) ? (int)$v['number'] : 8,
-			'ignore_sticky_posts' => false,
-		]);
-		if($query->have_posts()){
-			$i = 0;
-			foreach($query->posts as $post){
-				setup_postdata($post);
-				self::archive_card_sm([
-					'classes' => $i <= 2 ? 'g-tablet-1-3' : 'g-tablet-1-4',
-					'lazyload' => wp_is_mobile() && $lazyload_i < 1 ? false : true,
-					'category' => false,
-				]);
-				++$i;
-			}
-			wp_reset_postdata();
-		}else{
-			echo status_tip('info',___('No data yet.'));
-		}
-		unset($query);
-		?>
-	</div>
-	<a href="<?= $link;?>" class="below-more btn btn-block btn-default" target="<?= theme_functions::$link_target;?>"><?= sprintf(___('More about %s'),$title);?> <i class="fa fa-caret-right"></i></a>
-	<?php
-	/**
-	 * ad
-	 */
-	if(isset($v['ad']) && !empty($v['ad'])){
-		?>
-		<div class="homebox-ad"><?= stripslashes($v['ad']);?></div>
-	<?php } ?>
-</div>
-			<?php
-			++$lazyload_i;
-		} /** end foreach */
-
-		$cache[$cache_id] = html_minify(ob_get_contents());
-		ob_end_clean();
-		
-		theme_custom_homebox::set_cache($cache);
-		echo $cache[$cache_id];
-		unset($cache);
-	}
-	/**
-	 * Theme respond
-	 */
-	public static function theme_respond(){
-		global $post;
-		?>
-<div id="respond" class="panel">
-	<a href="javascript:;" id="cancel-comment-reply-link" class="none" title="<?= ___('Cancel reply');?>">&times;</a>
-	<div class="content">
-		<div class="page-tip" id="respond-loading-ready">
-			<?= status_tip('loading',___('Loading, please wait...'));?>
-		</div>
-		
-		<p id="respond-must-login" class="well hide-on-logged none">
-			<?php 
-			echo sprintf(
-				___('You must be %s to post a comment.'),
-				'<a href="' . esc_url(wp_login_url(theme_cache::get_permalink($post->ID))) . '#respond' . '"><strong>' . ___('log-in') . '</strong></a>'
-			);
-			?>
-		</p>
-			
-		<form 
-			id="commentform" 
-			action="javascript:;" 
-			method="post" 
-			class="comment-form media none"
-		>
-		<div class="media">
-			<input type="hidden" name="comment_post_ID" id="comment_post_ID" value="<?= $post->ID;?>">
-			<input type="hidden" name="comment_parent" id="comment_parent" value="0">
-			
-			<div class="media-left hidden-phone">
-				<img id="respond-avatar" src="<?= theme_functions::$avatar_placeholder;?>" alt="avatar" class="media-object avatar" width="100" height="100">
-			</div>
-			<div class="media-body">
-				<?php
-				/**
-				 * for visitor
-				 */
-				$req = theme_cache::get_option( 'require_name_email' );
-				?>
-				<!-- author name -->
-				<div id="area-respond-visitor" class="row">
-					<div class="g-tablet-1-2">
-						<div class="form-group">
-							<input type="text" 
-								class="form-control" 
-								name="author" 
-								id="comment-form-author" 
-								placeholder="<?= ___('Nickname');?><?= $req ? ' * ' : null;?>"
-								<?= $req ? ' required ' : null;?>
-								title="<?= ___('Whats your nickname?');?>"
-							>
-						</div><!-- /.form-group -->
-					</div><!-- /.g-tablet-1-2 -->
-					<!-- author email -->
-					<div class="g-tablet-1-2">
-						<div class="form-group">
-							<input type="email" 
-								class="form-control" 
-								name="email" 
-								id="comment-form-email" 
-								placeholder="<?= ___('Email');?><?= $req ? ' * ' : null;?>"
-								<?= $req ? ' required ' : null;?>
-								title="<?= ___('Whats your Email?');?>"
-							>
-						</div><!-- /.form-group -->
-					</div><!-- /.g-tablet-1-2 -->
-				</div><!-- /.row -->				
-				<div class="form-group form-group-textarea">
-					<textarea 
-						name="comment" 
-						id="comment-form-comment" 
-						class="form-control" 
-						rows="3" 
-						placeholder="<?= ___('Hi, have something to say?');?>" 
-						title="<?= ___('Nothing to say?');?>" 
-						required 
-					></textarea>
-				</div>
-				<div class="form-group btn-group-submit">
-					<?php
-					/**
-					 * theme comment emotion pop btn
-					 */
-					if(class_exists('theme_comment_emotion') && (theme_comment_emotion::is_enabled('kaomoji') || theme_comment_emotion::is_enabled('img'))){
-						theme_comment_emotion::display_frontend('pop');
-					}
-					?>
-					<?php
-					/**
-					 * theme comment emotion
-					 */
-					if(class_exists('theme_comment_emotion') && (theme_comment_emotion::is_enabled('kaomoji') || theme_comment_emotion::is_enabled('img'))){
-						theme_comment_emotion::display_frontend('pop-btn');
-					}
-					?>
-					<button type="submit" class="submit btn btn-success" title="<?= ___('Post comment');?>">
-						<i class="fa fa-check"></i> 
-						<?= ___('Post comment');?>
-					</button>
-				</div><!-- .form-group -->
-			</div><!-- /.media-body -->
-		</div><!-- /.media -->
-		</form>
-	</div>
-</div>
-		<?php
-	}
-	/**
-	 * Echo the user list within loop
-	 *
-	 * @param array $args
-	 * @return 
-	 * @version 1.0.2
-	 */
-	public static function the_user_list(array $args){
-		$args = array_merge([
-			'classes' => 'g-phone-1-3',
-			'user_id' => null,
-			'extra_title' => '', /** e.g. You have % points */
-			'extra' => 'point',
-			'target' => theme_functions::$link_target,
-		],$args);
-		
-		/**
-		 * extra point value
-		 */
-		switch($args['extra']){
-			/**
-			 * user point
-			 */
-			case 'point':
-				if(class_exists('theme_custom_point')){
-					$point_value = theme_custom_point::get_point($args['user_id']);
-				}
-				break;
-			/**
-			 * user fav be_count
-			 */
-			case 'fav':
-				if(class_exists('custom_post_fav')){
-					$point_value = custom_post_fav::get_user_be_fav_count($args['user_id']);
-				}
-				break;
-			/**
-			 * user posts count
-			 */
-			case 'posts':
-				if(class_exists('theme_custom_author_profile')){
-					$point_value = theme_custom_author_profile::get_count('works',$args['user_id']);
-				}else{
-					$point_value = count_user_posts($args['user_id']);
-				}
-				break;
-			default:
-				$point_value = null;
-		}
-
-		if(!empty($args['extra_title']) && $point_value)
-			$args['extra_title'] = str_replace('%',$point_value,$args['extra_title']);
-
-		
-		$display_name = theme_cache::get_the_author_meta('display_name',$args['user_id']);
-
-		$avatar_url = theme_cache::get_avatar_url($args['user_id']);
-		?>
-		<div class="user-list <?= $args['classes'];?>">
-			<a 
-				href="<?= theme_cache::get_author_posts_url($args['user_id'])?>" 
-				title="<?= $display_name;?>" 
-				target="<?= $args['target'];?>" 
-			>
-				<div class="avatar-container">
-					<img src="<?= theme_functions::$avatar_placeholder;?>" data-src="<?= $avatar_url;?>" alt="<?= $display_name;?>" class="avatar">
-				</div>
-				<h3 class="author"><?= $display_name;?></h3>
-				<?php if($args['extra']){ ?>
-					<div class="extra">
-						<span class="<?= $args['extra'];?>" title="<?= $args['extra_title'];?>">
-							<?= number_format($point_value);?>
-						</span>
-					</div>
-				<?php }/** end args extra */ ?>
-			</a>
-		</div>
-		<?php
-	}
+require 'update-checker/update-checker.php';
+$myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
+	'https://github.com/mirai-mamori/Sakurairo',
+	__FILE__,
+	'unique-plugin-or-theme-slug'
+);
+
+define('SAKURA_VERSION', wp_get_theme()->get('Version'));
+define('BUILD_VERSION', '3');
+
+//ini_set('display_errors', true);
+//error_reporting(E_ALL);
+error_reporting(E_ALL ^ E_NOTICE);
+
+if (!function_exists('akina_setup')):
+/**
+ * Sets up theme defaults and registers support for various WordPress features.
+ *
+ * Note that this function is hooked into the after_setup_theme hook, which
+ * runs before the init hook. The init hook is too late for some features, such
+ * as indicating support for post thumbnails.
+ */
+
+    if (!function_exists('optionsframework_init')) {
+        define('OPTIONS_FRAMEWORK_DIRECTORY', get_template_directory_uri() . '/inc/');
+        require_once dirname(__FILE__) . '/inc/options-framework.php';
+    }
+
+    function akina_setup()
+{
+        /*
+         * Make theme available for translation.
+         * Translations can be filed in the /languages/ directory.
+         * If you're building a theme based on Akina, use a find and replace
+         * to change 'akina' to the name of your theme in all the template files.
+         */
+        load_theme_textdomain('sakurairo', get_template_directory() . '/languages');
+
+        /*
+         * Enable support for Post Thumbnails on posts and pages.
+         *
+         * @link https://developer.wordpress.org/themes/functionality/featured-images-post-thumbnails/
+         */
+        add_theme_support('post-thumbnails');
+        set_post_thumbnail_size(150, 150, true);
+
+        // This theme uses wp_nav_menu() in one location.
+        register_nav_menus(array(
+            'primary' => __('Nav Menus', 'sakurairo'), //导航菜单
+        ));
+
+        /*
+         * Switch default core markup for search form, comment form, and comments
+         * to output valid HTML5.
+         */
+        add_theme_support('html5', array(
+            'search-form',
+            'comment-form',
+            'comment-list',
+            'gallery',
+            'caption',
+        ));
+
+        /*
+         * Enable support for Post Formats.
+         * See https://developer.wordpress.org/themes/functionality/post-formats/
+         */
+        add_theme_support('post-formats', array(
+            'aside',
+            'image',
+            'status',
+        ));
+
+        // Set up the WordPress core custom background feature.
+        add_theme_support('custom-background', apply_filters('akina_custom_background_args', array(
+            'default-color' => 'ffffff',
+            'default-image' => '',
+        )));
+
+        add_filter('pre_option_link_manager_enabled', '__return_true');
+
+        // 优化代码
+        //去除头部冗余代码
+        remove_action('wp_head', 'feed_links_extra', 3);
+        remove_action('wp_head', 'rsd_link');
+        remove_action('wp_head', 'wlwmanifest_link');
+        remove_action('wp_head', 'index_rel_link');
+        remove_action('wp_head', 'start_post_rel_link', 10, 0);
+        remove_action('wp_head', 'wp_generator');
+        remove_action('wp_head', 'wp_generator'); //隐藏wordpress版本
+        remove_filter('the_content', 'wptexturize'); //取消标点符号转义
+
+        //remove_action('rest_api_init', 'wp_oembed_register_route');
+        //remove_filter('rest_pre_serve_request', '_oembed_rest_pre_serve_request', 10, 4);
+        //remove_filter('oembed_dataparse', 'wp_filter_oembed_result', 10);
+        //remove_filter('oembed_response_data', 'get_oembed_response_data_rich', 10, 4);
+        //remove_action('wp_head', 'wp_oembed_add_discovery_links');
+        //remove_action('wp_head', 'wp_oembed_add_host_js');
+        remove_action('template_redirect', 'rest_output_link_header', 11, 0);
+
+        function coolwp_remove_open_sans_from_wp_core()
+    {
+            wp_deregister_style('open-sans');
+            wp_register_style('open-sans', false);
+            wp_enqueue_style('open-sans', '');
+        }
+        add_action('init', 'coolwp_remove_open_sans_from_wp_core');
+
+        /**
+         * Disable the emoji's
+         */
+        function disable_emojis()
+    {
+            remove_action('wp_head', 'print_emoji_detection_script', 7);
+            remove_action('admin_print_scripts', 'print_emoji_detection_script');
+            remove_action('wp_print_styles', 'print_emoji_styles');
+            remove_action('admin_print_styles', 'print_emoji_styles');
+            remove_filter('the_content_feed', 'wp_staticize_emoji');
+            remove_filter('comment_text_rss', 'wp_staticize_emoji');
+            remove_filter('wp_mail', 'wp_staticize_emoji_for_email');
+            add_filter('tiny_mce_plugins', 'disable_emojis_tinymce');
+        }
+        add_action('init', 'disable_emojis');
+
+        /**
+         * Filter function used to remove the tinymce emoji plugin.
+         *
+         * @param    array  $plugins
+         * @return   array             Difference betwen the two arrays
+         */
+        function disable_emojis_tinymce($plugins)
+    {
+            if (is_array($plugins)) {
+                return array_diff($plugins, array('wpemoji'));
+            } else {
+                return array();
+            }
+        }
+
+        // 移除菜单冗余代码
+        add_filter('nav_menu_css_class', 'my_css_attributes_filter', 100, 1);
+        add_filter('nav_menu_item_id', 'my_css_attributes_filter', 100, 1);
+        add_filter('page_css_class', 'my_css_attributes_filter', 100, 1);
+        function my_css_attributes_filter($var)
+    {
+            return is_array($var) ? array_intersect($var, array('current-menu-item', 'current-post-ancestor', 'current-menu-ancestor', 'current-menu-parent')) : '';
+        }
+
+    }
+endif;
+add_action('after_setup_theme', 'akina_setup');
+
+//说说页面
+function shuoshuo_custom_init()
+{
+    $labels = array(
+        'name' => '说说',
+        'singular_name' => '说说',
+        'add_new' => '发表说说',
+        'add_new_item' => '发表说说',
+        'edit_item' => '编辑说说',
+        'new_item' => '新说说',
+        'view_item' => '查看说说',
+        'search_items' => '搜索说说',
+        'not_found' => '暂无说说',
+        'not_found_in_trash' => '没有已遗弃的说说',
+        'parent_item_colon' => '',
+        'menu_name' => '说说'
+    );
+    $args = array(
+        'labels' => $labels,
+        'public' => true,
+        'publicly_queryable' => true,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'query_var' => true,
+        'rewrite' => true,
+        'capability_type' => 'post',
+        'has_archive' => true,
+        'hierarchical' => false,
+        'menu_position' => null,
+        'supports' => array(
+            'title',
+            'editor',
+            'author'
+        )
+    );
+    register_post_type('shuoshuo', $args);
 }
-add_action('after_setup_theme','theme_functions::init');
+add_action('init', 'shuoshuo_custom_init');
+
+function admin_lettering()
+{
+    echo '<style type="text/css">body{font-family: Microsoft YaHei;}</style>';
+}
+add_action('admin_head', 'admin_lettering');
+
+/**
+ * Set the content width in pixels, based on the theme's design and stylesheet.
+ *
+ * Priority 0 to make it available to lower priority callbacks.
+ *
+ * @global int $content_width
+ */
+function akina_content_width()
+{
+    $GLOBALS['content_width'] = apply_filters('akina_content_width', 640);
+}
+add_action('after_setup_theme', 'akina_content_width', 0);
+
+/**
+ * Enqueue scripts and styles.
+ */
+function sakura_scripts()
+{
+    if (akina_option('jsdelivr_cdn_test')) {
+        wp_enqueue_script('js_lib', get_template_directory_uri() . '/cdn/js/lib.js', array(), SAKURA_VERSION . akina_option('cookie_version', ''), true);
+        if (akina_option('SmoothScroll')) {
+            wp_enqueue_script('SmoothScroll', get_template_directory_uri() . '/cdn/js/src/20.SmoothScroll.js', array(), SAKURA_VERSION . akina_option('cookie_version', ''), true);
+        }
+    } elseif (akina_option('SmoothScroll')) {
+        wp_enqueue_script('js_lib', 'https://cdn.jsdelivr.net/combine/gh/mirai-mamori/Sakurairo@' . SAKURA_VERSION . '/cdn/js/lib.min.js,gh/mirai-mamori/Sakurairo@' . SAKURA_VERSION . '/cdn/js/src/20.SmoothScroll.js', array(), SAKURA_VERSION, true);
+    } else {
+        wp_enqueue_script('js_lib', 'https://cdn.jsdelivr.net/gh/mirai-mamori/Sakurairo@' . SAKURA_VERSION . '/cdn/js/lib.min.js', array(), SAKURA_VERSION, true);
+    }
+    if (akina_option('app_no_jsdelivr_cdn')) {
+        wp_enqueue_style('saukra_css', get_stylesheet_uri(), array(), SAKURA_VERSION);
+        wp_enqueue_script('app', get_template_directory_uri() . '/js/sakura-app.js', array(), SAKURA_VERSION, true);
+    } else {
+        wp_enqueue_style('saukra_css', 'https://cdn.jsdelivr.net/gh/mirai-mamori/Sakurairo@' . SAKURA_VERSION . '/style.min.css', array(), SAKURA_VERSION);
+        wp_enqueue_script('app', 'https://cdn.jsdelivr.net/gh/mirai-mamori/Sakurairo@' . SAKURA_VERSION . '/js/sakura-app.min.js', array(), SAKURA_VERSION, true);
+    }
+
+    if (is_singular() && comments_open() && get_option('thread_comments')) {
+        wp_enqueue_script('comment-reply');
+    }
+
+    // 20161116 @Louie
+    $mv_live = akina_option('focus_mvlive') ? 'open' : 'close';
+    $movies = akina_option('focus_amv') ? array('url' => akina_option('amv_url'), 'name' => akina_option('amv_title'), 'live' => $mv_live) : 'close';
+    $auto_height = akina_option('focus_height') ? 'fixed' : 'auto';
+    $code_lamp = 'close';
+    // if (wp_is_mobile()) {
+    //     $auto_height = 'fixed';
+    // }
+    //拦截移动端
+    version_compare($GLOBALS['wp_version'], '5.1', '>=') ? $reply_link_version = 'new' : $reply_link_version = 'old';
+    $gravatar_url = akina_option('gravatar_proxy') ?: 'secure.gravatar.com/avatar';
+    wp_localize_script('app', 'Poi', array(
+        'pjax' => akina_option('poi_pjax'),
+        'movies' => $movies,
+        'windowheight' => $auto_height,
+        'codelamp' => $code_lamp,
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'order' => get_option('comment_order'), // ajax comments
+        'formpostion' => 'bottom', // ajax comments 默认为bottom，如果你的表单在顶部则设置为top。
+        'reply_link_version' => $reply_link_version,
+        'api' => esc_url_raw(rest_url()),
+        'nonce' => wp_create_nonce('wp_rest'),
+        'google_analytics_id' => akina_option('google_analytics_id', ''),
+        'gravatar_url' => $gravatar_url
+    ));
+}
+add_action('wp_enqueue_scripts', 'sakura_scripts');
+
+/**
+ * load .php.
+ */
+require get_template_directory() . '/inc/decorate.php';
+require get_template_directory() . '/inc/swicher.php';
+require get_template_directory() . '/inc/api.php';
+
+/**
+ * Custom template tags for this theme.
+ */
+require get_template_directory() . '/inc/template-tags.php';
+
+/**
+ * Customizer additions.
+ */
+require get_template_directory() . '/inc/customizer.php';
+
+/**
+ * function update
+ */
+require get_template_directory() . '/inc/theme_plus.php';
+require get_template_directory() . '/inc/categories-images.php';
+
+//Comment Location Start
+function convertip($ip)
+{
+    if(empty($ip)) $ip = get_comment_author_IP();
+    $ch = curl_init();  
+    $timeout = 5;  
+    curl_setopt ($ch, CURLOPT_URL, 'http://ip.taobao.com/outGetIpInfo?accessKey=alibaba-inc&ip='.$ip);  
+    curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);  
+    curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, $timeout);  
+    $file_contents = curl_exec($ch);  
+    curl_close($ch);  
+    $result = json_decode($file_contents,true);
+    if ($result['data']['country'] != '中国') {
+        return $result['data']['country'];
+    } else {
+        return $result['data']['country'].'&nbsp;·&nbsp;'.$result['data']['region'].'&nbsp;·&nbsp;'.$result['data']['city'].'&nbsp;·&nbsp;'.$result['data']['isp'];
+    }
+}
+//Comment Location End
+
+/**
+ * COMMENT FORMATTING
+ *
+ * 标准的 lazyload 输出头像
+ * <?php echo str_replace( 'src=', 'src="https://cdn.jsdelivr.net/gh/moezx/cdn@3.0.1/img/svg/loader/index.ajax-spinner-preloader.svg" onerror="imgError(this,1)" data-src=', get_avatar( $comment->comment_author_email, '80', '', get_comment_author(), array( 'class' => array( 'lazyload' ) ) ) ); ?>
+ *
+ * 如果不延时是这样的
+ * <?php echo get_avatar( $comment->comment_author_email, '80', '', get_comment_author() ); ?>
+ *
+ */
+if (!function_exists('akina_comment_format')) {
+    function akina_comment_format($comment, $args, $depth)
+    {
+        $GLOBALS['comment'] = $comment;
+        ?>
+		<li <?php comment_class();?> id="comment-<?php echo esc_attr(comment_ID()); ?>">
+			<div class="contents">
+				<div class="comment-arrow">
+					<div class="main shadow">
+						<div class="profile">
+							<a href="<?php comment_author_url();?>" target="_blank" rel="nofollow"><?php echo str_replace('src=', 'src="'.akina_option('webweb_img').'/load/inload.svg" onerror="imgError(this,1)" data-src=', get_avatar($comment->comment_author_email, '80', '', get_comment_author(), array('class' => array('lazyload')))); ?></a>
+						</div>
+						<div class="commentinfo">
+							<section class="commeta">
+								<div class="left">
+									<h4 class="author"><a href="<?php comment_author_url();?>" target="_blank" rel="nofollow"><?php echo get_avatar($comment->comment_author_email, '24', '', get_comment_author()); ?><span class="bb-comment isauthor" title="<?php _e('Author', 'sakurairo');?>"><?php _e('Blogger', 'sakurairo'); /*博主*/?></span> <?php comment_author();?> <?php echo get_author_class($comment->comment_author_email, $comment->user_id); ?></a></h4>
+								</div>
+								<?php comment_reply_link(array_merge($args, array('depth' => $depth, 'max_depth' => $args['max_depth'])));?>
+								<div class="right">
+									<div class="info"><time datetime="<?php comment_date('Y-m-d');?>"><?php echo poi_time_since(strtotime($comment->comment_date_gmt), true); //comment_date(get_option('date_format'));  ?></time><?php echo siren_get_useragent($comment->comment_agent); ?><?php echo mobile_get_useragent_icon($comment->comment_agent); ?>&nbsp;<?php if(akina_option('open_location')){ _e('Location', 'sakurairo'); /*来自*/?>: <?php echo convertip(get_comment_author_ip());} ?>
+    									<?php if (current_user_can('manage_options') and (wp_is_mobile() == false)) {
+            $comment_ID = $comment->comment_ID;
+            $i_private = get_comment_meta($comment_ID, '_private', true);
+            $flag .= ' <i class="fa fa-snowflake-o" aria-hidden="true"></i> <a href="javascript:;" data-actionp="set_private" data-idp="' . get_comment_id() . '" id="sp" class="sm" style="color:rgba(0,0,0,.35)">' . __("Private", "sakurairo") . ': <span class="has_set_private">';
+            if (!empty($i_private)) {
+                $flag .= __("Yes", "sakurairo") . ' <i class="fa fa-lock" aria-hidden="true"></i>';
+            } else {
+                $flag .= __("No", "sakurairo") . ' <i class="fa fa-unlock" aria-hidden="true"></i>';
+            }
+            $flag .= '</span></a>';
+            $flag .= edit_comment_link('<i class="fa fa-pencil-square-o" aria-hidden="true"></i> ' . __("Edit", "mashiro"), ' <span style="color:rgba(0,0,0,.35)">', '</span>');
+            echo $flag;
+        }?></div>
+								</div>
+							</section>
+						</div>
+						<div class="body">
+							<?php comment_text();?>
+						</div>
+					</div>
+					<div class="arrow-left"></div>
+				</div>
+			</div>
+			<hr>
+		<?php
+}
+}
+
+/**
+ * 获取访客VIP样式
+ */
+function get_author_class($comment_author_email, $user_id)
+{
+    global $wpdb;
+    $author_count = count($wpdb->get_results(
+        "SELECT comment_ID as author_count FROM $wpdb->comments WHERE comment_author_email = '$comment_author_email' "));
+    if ($author_count >= 1 && $author_count < 5) //数字可自行修改，代表评论次数。
+    {
+        echo '<span class="showGrade0" title="Lv0"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/comment/level/level_0.svg" style="height: 1.5em; max-height: 1.5em; display: inline-block;"></span>';
+    } else if ($author_count >= 6 && $author_count < 10) {
+        echo '<span class="showGrade1" title="Lv1"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/comment/level/level_1.svg" style="height: 1.5em; max-height: 1.5em; display: inline-block;"></span>';
+    } else if ($author_count >= 10 && $author_count < 20) {
+        echo '<span class="showGrade2" title="Lv2"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/comment/level/level_2.svg" style="height: 1.5em; max-height: 1.5em; display: inline-block;"></span>';
+    } else if ($author_count >= 20 && $author_count < 40) {
+        echo '<span class="showGrade3" title="Lv3"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/comment/level/level_3.svg" style="height: 1.5em; max-height: 1.5em; display: inline-block;"></span>';
+    } else if ($author_count >= 40 && $author_count < 80) {
+        echo '<span class="showGrade4" title="Lv4"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/comment/level/level_4.svg" style="height: 1.5em; max-height: 1.5em; display: inline-block;"></span>';
+    } else if ($author_count >= 80 && $author_count < 160) {
+        echo '<span class="showGrade5" title="Lv5"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/comment/level/level_5.svg" style="height: 1.5em; max-height: 1.5em; display: inline-block;"></span>';
+    } else if ($author_count >= 160) {
+        echo '<span class="showGrade6" title="Lv6"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/comment/level/level_6.svg" style="height: 1.5em; max-height: 1.5em; display: inline-block;"></span>';
+    }
+
+}
+
+/**
+ * post views
+ */
+function restyle_text($number)
+{
+    switch (akina_option('statistics_format')) {
+        case "type_2": //23,333 次访问
+            return number_format($number);
+            break;
+        case "type_3": //23 333 次访问
+            return number_format($number, 0, '.', ' ');
+            break;
+        case "type_4": //23k 次访问
+            if ($number >= 1000) {
+                return round($number / 1000, 2) . 'k';
+            } else {
+                return $number;
+            }
+            break;
+        default:
+            return $number;
+    }
+}
+
+function set_post_views()
+{
+    if (is_singular()) {
+        global $post;
+        $post_id = intval($post->ID);
+        if ($post_id) {
+            $views = (int) get_post_meta($post_id, 'views', true);
+            if (!update_post_meta($post_id, 'views', ($views + 1))) {
+                add_post_meta($post_id, 'views', 1, true);
+            }
+        }
+    }
+}
+
+add_action('get_header', 'set_post_views');
+
+function get_post_views($post_id)
+{
+    if (akina_option('statistics_api') == 'wp_statistics') {
+        if (!function_exists('wp_statistics_pages')) {
+            return __('Please install pulgin <a href="https://wordpress.org/plugins/wp-statistics/" target="_blank">WP-Statistics</a>', 'sakurairo');
+        } else {
+            return restyle_text(wp_statistics_pages('total', 'uri', $post_id));
+        }
+    } else {
+        $views = get_post_meta($post_id, 'views', true);
+        if ($views == '') {
+            return 0;
+        } else {
+            return restyle_text($views);
+        }
+    }
+}
+
+/*
+ * Ajax点赞
+ */
+add_action('wp_ajax_nopriv_specs_zan', 'specs_zan');
+add_action('wp_ajax_specs_zan', 'specs_zan');
+function specs_zan()
+{
+    global $wpdb, $post;
+    $id = $_POST["um_id"];
+    $action = $_POST["um_action"];
+    if ($action == 'ding') {
+        $specs_raters = get_post_meta($id, 'specs_zan', true);
+        $expire = time() + 99999999;
+        $domain = ($_SERVER['HTTP_HOST'] != 'localhost') ? $_SERVER['HTTP_HOST'] : false; // make cookies work with localhost
+        setcookie('specs_zan_' . $id, $id, $expire, '/', $domain, false);
+        if (!$specs_raters || !is_numeric($specs_raters)) {
+            update_post_meta($id, 'specs_zan', 1);
+        } else {
+            update_post_meta($id, 'specs_zan', ($specs_raters + 1));
+        }
+        echo get_post_meta($id, 'specs_zan', true);
+    }
+    die;
+}
+
+function is_webp(){
+    $webp = strpos($_SERVER['HTTP_ACCEPT'], 'image/webp');
+    $webp === false ? $webp=0 : $webp=1;
+    return $webp;
+}
+
+/*
+ * 友情链接
+ */
+function get_the_link_items($id = null)
+{
+    $bookmarks = get_bookmarks('orderby=date&category=' . $id);
+    $output = '';
+    if (!empty($bookmarks)) {
+        $output .= '<ul class="link-items fontSmooth">';
+        foreach ($bookmarks as $bookmark) {
+            if (empty($bookmark->link_description)) {
+                $bookmark->link_description = __('This guy is so lazy ╮(╯▽╰)╭', 'sakurairo');
+            }
+
+            if (empty($bookmark->link_image)) {
+                $bookmark->link_image = 'https://view.moezx.cc/images/2017/12/30/Transparent_Akkarin.th.jpg';
+            }
+
+            $output .= '<li class="link-item"><a class="link-item-inner effect-apollo" href="' . $bookmark->link_url . '" title="' . $bookmark->link_description . '" target="_blank" rel="friend"><img class="lazyload" onerror="imgError(this,1)" data-src="' . $bookmark->link_image . '" src="'.akina_option('webweb_img').'/load/inload.svg"><span class="sitename">' . $bookmark->link_name . '</span><div class="linkdes">' . $bookmark->link_description . '</div></a></li>';
+        }
+        $output .= '</ul>';
+    }
+    return $output;
+}
+
+function get_link_items()
+{
+    $linkcats = get_terms('link_category');
+    if (!empty($linkcats)) {
+        foreach ($linkcats as $linkcat) {
+            $result .= '<h3 class="link-title"><span class="link-fix">' . $linkcat->name . '</span></h3>';
+            if ($linkcat->description) {
+                $result .= '<div class="link-description">' . $linkcat->description . '</div>';
+            }
+
+            $result .= get_the_link_items($linkcat->term_id);
+        }
+    } else {
+        $result = get_the_link_items();
+    }
+    return $result;
+}
+
+/*
+ * Gravatar头像使用中国服务器
+ */
+function gravatar_cn($url)
+{    
+    $gravatar_url = array('0.gravatar.com/avatar','1.gravatar.com/avatar','2.gravatar.com/avatar','secure.gravatar.com/avatar');
+    return str_replace( $gravatar_url, akina_option('gravatar_proxy'), $url );
+}
+if(akina_option('gravatar_proxy')){
+    add_filter('get_avatar_url', 'gravatar_cn', 4);
+}
+
+/*
+ * 自定义默认头像
+ */
+add_filter('avatar_defaults', 'mytheme_default_avatar');
+
+function mytheme_default_avatar($avatar_defaults)
+{
+    //$new_avatar_url = get_template_directory_uri() . '/images/default_avatar.png';
+    $new_avatar_url = 'https://cn.gravatar.com/avatar/b745710ae6b0ce9dfb13f5b7c0956be1';
+    $avatar_defaults[$new_avatar_url] = 'Default Avatar';
+    return $avatar_defaults;
+}
+
+/*
+ * 阻止站内文章互相Pingback
+ */
+function theme_noself_ping(&$links)
+{
+    $home = get_option('home');
+    foreach ($links as $l => $link) {
+        if (0 === strpos($link, $home)) {
+            unset($links[$l]);
+        }
+    }
+
+}
+add_action('pre_ping', 'theme_noself_ping');
+
+/*
+ * 订制body类
+ */
+function akina_body_classes($classes)
+{
+    // Adds a class of group-blog to blogs with more than 1 published author.
+    if (is_multi_author()) {
+        $classes[] = 'group-blog';
+    }
+    // Adds a class of hfeed to non-singular pages.
+    if (!is_singular()) {
+        $classes[] = 'hfeed';
+    }
+    // 定制中文字体class
+    $classes[] = 'chinese-font';
+    /*if(!wp_is_mobile()) {
+    $classes[] = 'serif';
+    }*/
+    $classes[] = $_COOKIE['dark'.akina_option('cookie_version', '')] == '1' ? 'dark' : ' ';
+    return $classes;
+}
+add_filter('body_class', 'akina_body_classes');
+
+/*
+ * 图片CDN
+ */
+add_filter('upload_dir', 'wpjam_custom_upload_dir');
+function wpjam_custom_upload_dir($uploads)
+{
+    $upload_path = '';
+    $upload_url_path = akina_option('qiniu_cdn');
+
+    if (empty($upload_path) || 'wp-content/uploads' == $upload_path) {
+        $uploads['basedir'] = WP_CONTENT_DIR . '/uploads';
+    } elseif (0 !== strpos($upload_path, ABSPATH)) {
+        $uploads['basedir'] = path_join(ABSPATH, $upload_path);
+    } else {
+        $uploads['basedir'] = $upload_path;
+    }
+
+    $uploads['path'] = $uploads['basedir'] . $uploads['subdir'];
+
+    if ($upload_url_path) {
+        $uploads['baseurl'] = $upload_url_path;
+        $uploads['url'] = $uploads['baseurl'] . $uploads['subdir'];
+    }
+    return $uploads;
+}
+
+/*
+ * 删除自带小工具
+ */
+function unregister_default_widgets()
+{
+    unregister_widget("WP_Widget_Pages");
+    unregister_widget("WP_Widget_Calendar");
+    unregister_widget("WP_Widget_Archives");
+    unregister_widget("WP_Widget_Links");
+    unregister_widget("WP_Widget_Meta");
+    unregister_widget("WP_Widget_Search");
+    //unregister_widget("WP_Widget_Text");
+    unregister_widget("WP_Widget_Categories");
+    unregister_widget("WP_Widget_Recent_Posts");
+    //unregister_widget("WP_Widget_Recent_Comments");
+    //unregister_widget("WP_Widget_RSS");
+    //unregister_widget("WP_Widget_Tag_Cloud");
+    unregister_widget("WP_Nav_Menu_Widget");
+}
+add_action("widgets_init", "unregister_default_widgets", 11);
+
+/**
+ * Jetpack setup function.
+ *
+ * See: https://jetpack.com/support/infinite-scroll/
+ * See: https://jetpack.com/support/responsive-videos/
+ */
+function akina_jetpack_setup()
+{
+    // Add theme support for Infinite Scroll.
+    add_theme_support('infinite-scroll', array(
+        'container' => 'main',
+        'render' => 'akina_infinite_scroll_render',
+        'footer' => 'page',
+    ));
+
+    // Add theme support for Responsive Videos.
+    add_theme_support('jetpack-responsive-videos');
+}
+add_action('after_setup_theme', 'akina_jetpack_setup');
+
+/**
+ * Custom render function for Infinite Scroll.
+ */
+function akina_infinite_scroll_render()
+{
+    while (have_posts()) {
+        the_post();
+        if (is_search()):
+            get_template_part('tpl/content', 'search');
+        else:
+            get_template_part('tpl/content', get_post_format());
+        endif;
+    }
+}
+
+/*
+ * 编辑器增强
+ */
+function enable_more_buttons($buttons)
+{
+    $buttons[] = 'hr';
+    $buttons[] = 'del';
+    $buttons[] = 'sub';
+    $buttons[] = 'sup';
+    $buttons[] = 'fontselect';
+    $buttons[] = 'fontsizeselect';
+    $buttons[] = 'cleanup';
+    $buttons[] = 'styleselect';
+    $buttons[] = 'wp_page';
+    $buttons[] = 'anchor';
+    $buttons[] = 'backcolor';
+    return $buttons;
+}
+add_filter("mce_buttons_3", "enable_more_buttons");
+// 下载按钮
+function download($atts, $content = null)
+{
+    return '<a class="download" href="' . $content . '" rel="external"
+target="_blank" title="下载地址">
+<span><i class="iconfont down icon-pulldown"></i>Download</span></a>';}
+add_shortcode("download", "download");
+
+add_action('after_wp_tiny_mce', 'bolo_after_wp_tiny_mce');
+function bolo_after_wp_tiny_mce($mce_settings)
+{
+    ?>
+<script type="text/javascript">
+QTags.addButton( 'download', '下载按钮', "[download]下载地址[/download]" );
+function bolo_QTnextpage_arg1() {
+}
+</script>
+<?php }
+
+/*
+ * 后台登录页
+ * @M.J
+ */
+//Login Page style
+function custom_login()
+{
+    require get_template_directory() . '/inc/login_addcss.php';
+    //echo '<link rel="stylesheet" type="text/css" href="' . get_bloginfo('template_directory') . '/inc/login.css" />'."\n";
+    echo '<link rel="stylesheet" type="text/css" href="' . get_template_directory_uri() . '/inc/login.css?' . SAKURA_VERSION . '" />' . "\n";
+    //echo '<script type="text/javascript" src="'.get_bloginfo('template_directory').'/js/jquery.min.js"></script>'."\n";
+    echo '<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/jquery/jquery@1.9.0/jquery.min.js"></script>' . "\n";
+}
+
+add_action('login_head', 'custom_login');
+
+//Login Page Title
+function custom_headertitle($title)
+{
+    return get_bloginfo('name');
+}
+add_filter('login_headertitle', 'custom_headertitle');
+
+//Login Page Link
+function custom_loginlogo_url($url)
+{
+    return esc_url(home_url('/'));
+}
+add_filter('login_headerurl', 'custom_loginlogo_url');
+
+//Login Page Footer
+function custom_html()
+{
+    if (akina_option('login_bg')) {
+        $loginbg = akina_option('login_bg');
+    } else {
+        $loginbg = 'https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/background/backstage/login-bg.png';
+    }
+    echo '<script type="text/javascript" src="' . get_template_directory_uri() . '/js/login.js"></script>' . "\n";
+    echo '<script type="text/javascript">' . "\n";
+    echo 'jQuery("body").prepend("<div class=\"loading\"><img src=\"https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/basic/login_loading.gif\" width=\"58\" height=\"10\"></div><div id=\"bg\"><img /></div>");' . "\n";
+    echo 'jQuery(\'#bg\').children(\'img\').attr(\'src\', \'' . $loginbg . '\').load(function(){' . "\n";
+    echo '	resizeImage(\'bg\');' . "\n";
+    echo '	jQuery(window).bind("resize", function() { resizeImage(\'bg\'); });' . "\n";
+    echo '	jQuery(\'.loading\').fadeOut();' . "\n";
+    echo '});';
+    echo '</script>' . "\n";
+    echo '<script>
+	function verificationOK(){
+		var x, y, z = "verification";
+		var x=$(\'#loginform\').find(\'input[name="verification"]\').val();
+		//var x=document.forms["loginform"]["verification"].value; //原生js实现
+		var y=$(\'#registerform\').find(\'input[name="verification"]\').val();
+		var z=$(\'#lostpasswordform\').find(\'input[name="verification"]\').val();
+		if (x=="verification" || y=="verification" || z=="verification"){
+		  alert("Please slide the block to verificate!");
+		  return false;
+	  }
+    }
+    $(document).ready(function(){
+        $(\'h1 a\').attr(\'style\',\'background-image: url(' . akina_option('logo_img') . '); \');
+		$(".forgetmenot").replaceWith(\'<p class="forgetmenot">Remember Me<input name="rememberme" id="rememberme" value="forever" type="checkbox"><label for="rememberme" style="float: right;margin-top: 5px;transform: scale(2);margin-right: -10px;"></label></p>\');
+	});
+    </script>';
+if (akina_option('login_pf', '1')) {
+    echo '<script>
+	$(document).ready(function(){
+		$( \'<p><div id="verification-slider"><div id="slider"><div id="slider_bg"></div><span id="label">»</span><span id="labelTip">Slide to Verificate</span></div><input type="hidden" name="verification" value="verification" /></div><p>\' ).insertBefore( $( ".submit" ) );
+		$(\'form\').attr(\'onsubmit\',\'return verificationOK();\');
+	});
+	</script>';
+    echo '<script type="text/javascript">
+		var startTime = 0;
+		var endTime = 0;
+		var numTime = 0;
+		$(function () {
+			var slider = new SliderUnlock("#slider",{
+			successLabelTip : "OK"
+		},function(){
+			var sli_width = $("#slider_bg").width();
+			$(\'#verification-slider\').html(\'\').append(\'<input id="verification-ok" class="input" type="text" size="25" value="OK!" name="verification" disabled="true" />\');
+
+			endTime = nowTime();
+			numTime = endTime-startTime;
+			endTime = 0;
+			startTime = 0;
+			// 获取到滑动使用的时间 滑动的宽度
+			// alert( numTime );
+			// alert( sli_width );
+		});
+			slider.init();
+		})
+
+		/**
+		* 获取时间精确到毫秒
+		* @type
+		*/
+		function nowTime(){
+			var myDate = new Date();
+			var H = myDate.getHours();//获取小时
+			var M = myDate.getMinutes(); //获取分钟
+			var S = myDate.getSeconds();//获取秒
+			var MS = myDate.getMilliseconds();//获取毫秒
+			var milliSeconds = H * 3600 * 1000 + M * 60 * 1000 + S * 1000 + MS;
+			return milliSeconds;
+		}
+	</script>
+	<script type="text/javascript" src="' . get_template_directory_uri() . '/user/verification.js"></script>';
+}
+}
+add_action('login_footer', 'custom_html');
+
+//Login message
+//* Add custom message to WordPress login page
+function smallenvelop_login_message($message)
+{
+    if (empty($message)) {
+        return '<p class="message"><strong>You may try 3 times for every 5 minutes!</strong></p>';
+    } else {
+        return $message;
+    }
+}
+//add_filter( 'login_message', 'smallenvelop_login_message' );
+
+//Fix password reset bug </>
+function resetpassword_message_fix($message)
+{
+    $message = str_replace("<", "", $message);
+    $message = str_replace(">", "", $message);
+    return $message;
+}
+add_filter('retrieve_password_message', 'resetpassword_message_fix');
+
+//Fix register email bug </>
+function new_user_message_fix($message)
+{
+    $show_register_ip = "注册IP | Registration IP: " . get_the_user_ip() . " (" . convertip(get_the_user_ip()) . ")\r\n\r\n如非本人操作请忽略此邮件 | Please ignore this email if this was not your operation.\r\n\r\n";
+    $message = str_replace("To set your password, visit the following address:", $show_register_ip . "在此设置密码 | To set your password, visit the following address:", $message);
+    $message = str_replace("<", "", $message);
+    $message = str_replace(">", "\r\n\r\n设置密码后在此登陆 | Login here after setting password: ", $message);
+    return $message;
+}
+add_filter('wp_new_user_notification_email', 'new_user_message_fix');
+
+/*
+ * 评论邮件回复
+ */
+function comment_mail_notify($comment_id)
+{
+    $mail_user_name = akina_option('mail_user_name') ? akina_option('mail_user_name') : 'poi';
+    $comment = get_comment($comment_id);
+    $parent_id = $comment->comment_parent ? $comment->comment_parent : '';
+    $spam_confirmed = $comment->comment_approved;
+    $mail_notify = akina_option('mail_notify') ? get_comment_meta($parent_id, 'mail_notify', false) : false;
+    $admin_notify = akina_option('admin_notify') ? '1' : (get_comment($parent_id)->comment_author_email != get_bloginfo('admin_email') ? '1' : '0');
+    if (($parent_id != '') && ($spam_confirmed != 'spam') && ($admin_notify != '0') && (!$mail_notify)) {
+        $wp_email = $mail_user_name . '@' . preg_replace('#^www\.#', '', strtolower($_SERVER['SERVER_NAME']));
+        $to = trim(get_comment($parent_id)->comment_author_email);
+        $subject = '你在 [' . get_option("blogname") . '] 的留言有了回应';
+        $message = '
+      <div style="background: white;
+      width: 95%;
+      max-width: 800px;
+      margin: auto auto;
+      border-radius: 5px;
+      border: '.akina_option('theme_skin').' 1px solid;
+      overflow: hidden;
+      -webkit-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.12);
+      box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.18);">
+        <header style="overflow: hidden;">
+            <img style="width:100%;z-index: 666;" src="'.akina_option('mail_img').'">
+        </header>
+        <div style="padding: 5px 20px;">
+        <p style="position: relative;
+        color: white;
+        float: left;
+        z-index: 999;
+        background: '.akina_option('theme_skin').';
+        padding: 5px 30px;
+        margin: -25px auto 0 ;
+        box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.30)">Dear&nbsp;' . trim(get_comment($parent_id)->comment_author) . '</p>
+        <br>
+        <h3>您有一条来自<a style="text-decoration: none;color: '.akina_option('theme_skin').' " target="_blank" href="' . home_url() . '/">' . get_option("blogname") . '</a>的回复</h3>
+        <br>
+        <p style="font-size: 14px;">您在文章《' . get_the_title($comment->comment_post_ID) . '》上发表的评论：</p>
+        <div style="border-bottom:#ddd 1px solid;border-left:#ddd 1px solid;padding-bottom:20px;background-color:#eee;margin:15px 0px;padding-left:20px;padding-right:20px;border-top:#ddd 1px solid;border-right:#ddd 1px solid;padding-top:20px">'
+        . trim(get_comment($parent_id)->comment_content) . '</div>
+        <p style="font-size: 14px;">' . trim($comment->comment_author) . ' 给您的回复如下：</p>
+        <div style="border-bottom:#ddd 1px solid;border-left:#ddd 1px solid;padding-bottom:20px;background-color:#eee;margin:15px 0px;padding-left:20px;padding-right:20px;border-top:#ddd 1px solid;border-right:#ddd 1px solid;padding-top:20px">'
+        . trim($comment->comment_content) . '</div>
+
+      <div style="text-align: center;">
+          <img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository/vision/comment/comment-mail.png" alt="hr" style="width:100%;
+                                                                                                  margin:5px auto 5px auto;
+                                                                                                  display: block;">
+          <a style="text-transform: uppercase;
+                      text-decoration: none;
+                      font-size: 14px;
+                      border: 2px solid #6c7575;
+                      color: #2f3333;
+                      padding: 10px;
+                      display: inline-block;
+                      margin: 10px auto 0; " target="_blank" href="' . htmlspecialchars(get_comment_link($parent_id)) . '">点击查看回复的完整內容</a>
+      </div>
+        <p style="font-size: 12px;text-align: center;color: #999;">本邮件为系统自动发出，请勿直接回复<br>
+        &copy; ' . date(Y) . ' ' . get_option("blogname") . '</p>
+      </div>
+    </div>
+';
+        $message = convert_smilies($message);
+        $message = str_replace("{{", '<img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository@0.2.1/vision/smilies/bilipng/emoji_', $message);
+        $message = str_replace("}}", '.png" alt="emoji" style="height: 2em; max-height: 2em;">', $message);
+
+        $message = str_replace('{UPLOAD}', 'https://i.loli.net/', $message);
+        $message = str_replace('[/img][img]', '[/img^img]', $message);
+
+        $message = str_replace('[img]', '<img src="', $message);
+        $message = str_replace('[/img]', '" style="width:80%;display: block;margin-left: auto;margin-right: auto;">', $message);
+
+        $message = str_replace('[/img^img]', '" style="width:80%;display: block;margin-left: auto;margin-right: auto;"><img src="', $message);
+        $from = "From: \"" . get_option('blogname') . "\" <$wp_email>";
+        $headers = "$from\nContent-Type: text/html; charset=" . get_option('blog_charset') . "\n";
+        wp_mail($to, $subject, $message, $headers);
+    }
+}
+add_action('comment_post', 'comment_mail_notify');
+
+/*
+ * 链接新窗口打开
+ */
+function rt_add_link_target($content)
+{
+    $content = str_replace('<a', '<a rel="nofollow"', $content);
+    // use the <a> tag to split into segments
+    $bits = explode('<a ', $content);
+    // loop though the segments
+    foreach ($bits as $key => $bit) {
+        // fix the target="_blank" bug after the link
+        if (strpos($bit, 'href') === false) {
+            continue;
+        }
+
+        // fix the target="_blank" bug in the codeblock
+        if (strpos(preg_replace('/code([\s\S]*?)\/code[\s]*/m', 'temp', $content), $bit) === false) {
+            continue;
+        }
+
+        // find the end of each link
+        $pos = strpos($bit, '>');
+        // check if there is an end (only fails with malformed markup)
+        if ($pos !== false) {
+            // get a string with just the link's attibutes
+            $part = substr($bit, 0, $pos);
+            // for comparison, get the current site/network url
+            $siteurl = network_site_url();
+            // if the site url is in the attributes, assume it's in the href and skip, also if a target is present
+            if (strpos($part, $siteurl) === false && strpos($part, 'target=') === false) {
+                // add the target attribute
+                $bits[$key] = 'target="_blank" ' . $bits[$key];
+            }
+        }
+    }
+    // re-assemble the content, and return it
+    return implode('<a ', $bits);
+}
+add_filter('comment_text', 'rt_add_link_target');
+
+// 评论通过BBCode插入图片
+function comment_picture_support($content)
+{
+    $content = str_replace('http://', 'https://', $content); // 干掉任何可能的 http
+    $content = str_replace('{UPLOAD}', 'https://i.loli.net/', $content);
+    $content = str_replace('[/img][img]', '[/img^img]', $content);
+    $content = str_replace('[img]', '<br><img src="'.akina_option('webweb_img').'/load/inload.svg" data-src="', $content);
+    $content = str_replace('[/img]', '" class="lazyload comment_inline_img" onerror="imgError(this)"><br>', $content);
+    $content = str_replace('[/img^img]', '" class="lazyload comment_inline_img" onerror="imgError(this)"><img src="'.akina_option('webweb_img').'/load/inload.svg" data-src="', $content);
+    return $content;
+}
+add_filter('comment_text', 'comment_picture_support');
+
+/*
+ * 修改评论表情调用路径
+ */
+
+// 简单遍历系统表情库，今后应考虑标识表情包名——使用增加的扩展名，同时保留原有拓展名
+// 还有一个思路是根据表情调用路径来判定<-- 此法最好！
+// 贴吧
+
+
+$wpsmiliestrans = array();
+function push_tieba_smilies() {
+global $wpsmiliestrans;
+// don't bother setting up smilies if they are disabled
+if ( !get_option('use_smilies'))
+    return;
+    $tiebaname = array('good','han','spray','Grievance','shui','reluctantly','anger','tongue','se','haha','rmb','doubt','tear','surprised2','Happy','ku','surprised','theblackline','smilingeyes','spit','huaji','bbd','hu','shame','naive','rbq','britan','aa','niconiconi','niconiconi_t','niconiconit','awesome');
+    $return_smiles = '';
+    for($i=0;$i<count($tiebaname);$i++){
+      $tieba_Name=$tiebaname[$i];
+      if (is_webp() == 1){
+          $tiebaimgdir="tiebawebp/";
+          $smiliesgs=".webp";
+      }else{
+          $tiebaimgdir="tiebapng/";
+          $smiliesgs=".png";
+      }
+      // 选择面版
+      $return_smiles = $return_smiles . '<span title="'.$tieba_Name.'" onclick="grin('."'".$tieba_Name."'".',type = \'tieba\')"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository@latest/vision/smilies/'. $tiebaimgdir .'icon_'. $tieba_Name . $smiliesgs.'" /></span>';
+      // 正文转换
+      $wpsmiliestrans['::' . $tieba_Name . '::'] = '<span title="'. $tieba_Name .'" onclick="grin('."'". $tieba_Name ."'".',type = \'tieba\')"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository@latest/vision/smilies/'.$tiebaimgdir.'icon_'. $tieba_Name .$smiliesgs.'" /></span>';
+      }
+      return $return_smiles;
+  }
+  push_tieba_smilies();
+
+function tieba_smile_filter($content) {
+    global $wpsmiliestrans;
+    $content =  str_replace(array_keys($wpsmiliestrans), $wpsmiliestrans, $content); 
+    return $content;
+}
+add_filter('the_content', 'tieba_smile_filter'); //替换文章关键词
+add_filter('comment_text', 'tieba_smile_filter');//替换评论关键词
+
+function push_emoji_panel() {
+    return '
+        <a class="emoji-item">(⌒▽⌒)</a>
+        <a class="emoji-item">（￣▽￣）</a>
+        <a class="emoji-item">(=・ω・=)</a>
+        <a class="emoji-item">(｀・ω・´)</a>
+        <a class="emoji-item">(〜￣△￣)〜</a>
+        <a class="emoji-item">(･∀･)</a>
+        <a class="emoji-item">(°∀°)ﾉ</a>
+        <a class="emoji-item">(￣3￣)</a>
+        <a class="emoji-item">╮(￣▽￣)╭</a>
+        <a class="emoji-item">(´_ゝ｀)</a>
+        <a class="emoji-item">←_←</a>
+        <a class="emoji-item">→_→</a>
+        <a class="emoji-item">(&lt;_&lt;)</a>
+        <a class="emoji-item">(&gt;_&gt;)</a>
+        <a class="emoji-item">(;¬_¬)</a>
+        <a class="emoji-item">("▔□▔)/</a>
+        <a class="emoji-item">(ﾟДﾟ≡ﾟдﾟ)!?</a>
+        <a class="emoji-item">Σ(ﾟдﾟ;)</a>
+        <a class="emoji-item">Σ(￣□￣||)</a>
+        <a class="emoji-item">(’；ω；‘)</a>
+        <a class="emoji-item">（/TДT)/</a>
+        <a class="emoji-item">(^・ω・^ )</a>
+        <a class="emoji-item">(｡･ω･｡)</a>
+        <a class="emoji-item">(●￣(ｴ)￣●)</a>
+        <a class="emoji-item">ε=ε=(ノ≧∇≦)ノ</a>
+        <a class="emoji-item">(’･_･‘)</a>
+        <a class="emoji-item">(-_-#)</a>
+        <a class="emoji-item">（￣へ￣）</a>
+        <a class="emoji-item">(￣ε(#￣)Σ</a>
+        <a class="emoji-item">ヽ(‘Д’)ﾉ</a>
+        <a class="emoji-item">（#-_-)┯━┯</a>
+        <a class="emoji-item">(╯°口°)╯(┴—┴</a>
+        <a class="emoji-item">←◡←</a>
+        <a class="emoji-item">( ♥д♥)</a>
+        <a class="emoji-item">_(:3」∠)_</a>
+        <a class="emoji-item">Σ&gt;―(〃°ω°〃)♡→</a>
+        <a class="emoji-item">⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄</a>
+        <a class="emoji-item">(╬ﾟдﾟ)▄︻┻┳═一</a>
+        <a class="emoji-item">･*･:≡(　ε:)</a>
+        <a class="emoji-item">(笑)</a>
+        <a class="emoji-item">(汗)</a>
+        <a class="emoji-item">(泣)</a>
+        <a class="emoji-item">(苦笑)</a>
+    ';
+}
+
+// bilibili smiles
+$bilismiliestrans = array();
+function push_bili_smilies(){
+  global $bilismiliestrans;
+  $name = array('baiyan','bishi','bizui','chan','dai','daku','dalao','dalian','dianzan','doge','facai','fanu','ganga','guilian','guzhang','haixiu','heirenwenhao','huaixiao','jingxia','keai','koubizi','kun','lengmo','liubixue','liuhan','liulei','miantian','mudengkoudai','nanguo','outu','qinqin','se','shengbing','shengqi','shuizhao','sikao','tiaokan','tiaopi','touxiao','tuxue','weiqu','weixiao','wunai','xiaoku','xieyanxiao','yiwen','yun','zaijian','zhoumei','zhuakuang');
+  $return_smiles = '';
+  for($i=0;$i<count($name);$i++){
+    $smilies_Name=$name[$i];
+    if (is_webp() == 1){
+        $biliimgdir="biliwebp/";
+        $smiliesgs=".webp";
+    }else{
+        $biliimgdir="bilipng/";
+        $smiliesgs=".png";
+    }
+    // 选择面版
+    $return_smiles = $return_smiles . '<span title="'.$smilies_Name.'" onclick="grin('."'".$smilies_Name."'".',type = \'Math\')"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository@latest/vision/smilies/'. $biliimgdir .'emoji_'. $smilies_Name . $smiliesgs.'" /></span>';
+    // 正文转换
+    $bilismiliestrans['{{' . $smilies_Name . '}}'] = '<span title="'. $smilies_Name .'" onclick="grin('."'". $smilies_Name ."'".',type = \'Math\')"><img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository@latest/vision/smilies/'.$biliimgdir.'emoji_'. $smilies_Name .$smiliesgs.'" /></span>';
+    }
+    return $return_smiles;
+}
+push_bili_smilies();
+
+function bili_smile_filter($content) {
+    global $bilismiliestrans;
+    $content =  str_replace(array_keys($bilismiliestrans), $bilismiliestrans, $content); 
+    return $content;
+}
+add_filter('the_content', 'bili_smile_filter'); //替换文章关键词
+add_filter('comment_text', 'bili_smile_filter');//替换评论关键词
+
+function featuredtoRSS($content) {
+    global $post;
+    if ( has_post_thumbnail( $post->ID ) ){
+        $content = '<div>' . get_the_post_thumbnail( $post->ID, 'medium', array( 'style' => 'margin-bottom: 15px;' ) ) . '</div>' . $content;
+    }
+    return $content;
+}
+add_filter('the_excerpt_rss', 'featuredtoRSS');
+add_filter('the_content_feed', 'featuredtoRSS');
+
+//
+function bili_smile_filter_rss($content) {
+    if (is_webp() == 1){
+        $biliimgdir="biliwebp/";
+        $smiliesgs=".webp";
+    }else{
+        $biliimgdir="bilipng/";
+        $smiliesgs=".png";
+    }
+    $content = str_replace("{{",'<img src="https://cdn.jsdelivr.net/gh/Fuukei/Public_Repository@latest/vision/smilies/'.$biliimgdir,$content);
+    $content = str_replace("}}",$smilesgs.'" alt="emoji" style="height: 2em; max-height: 2em;">',$content);
+    $content =  str_replace('[img]', '<img src="', $content); 
+    $content =  str_replace('[/img]', '" style="display: block;margin-left: auto;margin-right: auto;">', $content); 
+    return $content;
+}
+add_filter( 'comment_text_rss', 'bili_smile_filter_rss' );//替换评论rss关键词
+
+function toc_support($content)
+{
+    $content = str_replace('[toc]', '<div class="has-toc have-toc"></div>', $content); // TOC 支持
+    $content = str_replace('[begin]', '<span class="begin">', $content); // 首字格式支持
+    $content = str_replace('[/begin]', '</span>', $content); // 首字格式支持
+    return $content;
+}
+add_filter('the_content', 'toc_support');
+add_filter('the_excerpt_rss', 'toc_support');
+add_filter('the_content_feed', 'toc_support');
+
+// 显示访客当前 IP
+function get_the_user_ip()
+{
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+//check ip from share internet
+        $ip = $_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+//to check ip is pass from proxy
+        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else {
+        $ip = $_SERVER['REMOTE_ADDR'];
+    }
+    return apply_filters('wpb_get_ip', $ip);
+}
+
+add_shortcode('show_ip', 'get_the_user_ip');
+
+/*歌词*/
+function hero_get_lyric()
+{
+    /** These are the lyrics to Hero */
+    $lyrics = "";
+
+    // Here we split it into lines
+    $lyrics = explode("\n", $lyrics);
+
+    // And then randomly choose a line
+    return wptexturize($lyrics[mt_rand(0, count($lyrics) - 1)]);
+}
+
+// This just echoes the chosen line, we'll position it later
+function hello_hero()
+{
+    $chosen = hero_get_lyric();
+    echo $chosen;
+}
+
+/*私密评论*/
+add_action('wp_ajax_nopriv_siren_private', 'siren_private');
+add_action('wp_ajax_siren_private', 'siren_private');
+function siren_private()
+{
+    $comment_id = $_POST["p_id"];
+    $action = $_POST["p_action"];
+    if ($action == 'set_private') {
+        update_comment_meta($comment_id, '_private', 'true');
+        $i_private = get_comment_meta($comment_ID, '_private', true);
+        if (!empty($i_private)) {
+            echo '否';
+        } else {
+            echo '是';
+        }
+    }
+    die;
+}
+
+//时间序列
+function memory_archives_list()
+{
+    if (true) {
+        $output = '<div id="archives"><p style="text-align:right;">[<span id="al_expand_collapse">' . __("All expand/collapse", "sakurairo") /*全部展开/收缩*/ . '</span>]<!-- (注: 点击月份可以展开)--></p>';
+        $the_query = new WP_Query('posts_per_page=-1&ignore_sticky_posts=1&post_type=post'); //update: 加上忽略置顶文章
+        $year = 0;
+        $mon = 0;
+        $i = 0;
+        $j = 0;
+        while ($the_query->have_posts()): $the_query->the_post();
+            $year_tmp = get_the_time('Y');
+            $mon_tmp = get_the_time('m');
+            $y = $year;
+            $m = $mon;
+            if ($mon != $mon_tmp && $mon > 0) {
+                $output .= '</ul></li>';
+            }
+
+            if ($year != $year_tmp && $year > 0) {
+                $output .= '</ul>';
+            }
+
+            if ($year != $year_tmp) {
+                $year = $year_tmp;
+                $output .= '<h3 class="al_year">' . $year . __(" ", "year", "sakurairo") . /*年*/' </h3><ul class="al_mon_list">'; //输出年份
+            }
+            if ($mon != $mon_tmp) {
+                $mon = $mon_tmp;
+                $output .= '<li class="al_li"><span class="al_mon"><span style="color:'.akina_option('theme_skin').';">' . get_the_time('M') . '</span> (<span id="post-num"></span>' . __(" post(s)", "sakurairo") /*篇文章*/ . ')</span><ul class="al_post_list">'; //输出月份
+            }
+            $output .= '<li>' . '<a href="' . get_permalink() . '"><span style="color:'.akina_option('theme_skin').';">' /*get_the_time('d'.__(" ","sakurairo")) 日*/ . '</span>' . get_the_title() . ' <span>(' . get_post_views(get_the_ID()) . ' <span class="fa fa-fire" aria-hidden="true"></span> / ' . get_comments_number('0', '1', '%') . ' <span class="fa fa-commenting" aria-hidden="true"></span>)</span></a></li>'; //输出文章日期和标题
+        endwhile;
+        wp_reset_postdata();
+        $output .= '</ul></li></ul> <!--<ul class="al_mon_list"><li><ul class="al_post_list" style="display: block;"><li>博客已经萌萌哒运行了<span id="monitorday"></span>天</li></ul></li></ul>--></div>';
+        #update_option('memory_archives_list', $output);
+    }
+    echo $output;
+}
+
+/*
+ * 隐藏 Dashboard
+ */
+/* Remove the "Dashboard" from the admin menu for non-admin users */
+function remove_dashboard()
+{
+    global $current_user, $menu, $submenu;
+    wp_get_current_user();
+
+    if (!in_array('administrator', $current_user->roles)) {
+        reset($menu);
+        $page = key($menu);
+        while ((__('Dashboard') != $menu[$page][0]) && next($menu)) {
+            $page = key($menu);
+        }
+        if (__('Dashboard') == $menu[$page][0]) {
+            unset($menu[$page]);
+        }
+        reset($menu);
+        $page = key($menu);
+        while (!$current_user->has_cap($menu[$page][1]) && next($menu)) {
+            $page = key($menu);
+        }
+        if (preg_match('#wp-admin/?(index.php)?$#', $_SERVER['REQUEST_URI']) &&
+            ('index.php' != $menu[$page][2])) {
+            wp_redirect(get_option('siteurl') . '/wp-admin/profile.php');
+        }
+    }
+}
+add_action('admin_menu', 'remove_dashboard');
+
+/**
+ * Filter the except length to 20 words. 限制摘要长度
+ *
+ * @param int $length Excerpt length.
+ * @return int (Maybe) modified excerpt length.
+ */
+
+function GBsubstr($string, $start, $length)
+{
+    if (strlen($string) > $length) {
+        $str = null;
+        $len = 0;
+        $i = $start;
+        while ($len < $length) {
+            if (ord(substr($string, $i, 1)) > 0xc0) {
+                $str .= substr($string, $i, 3);
+                $i += 3;
+            } elseif (ord(substr($string, $i, 1)) > 0xa0) {
+                $str .= substr($string, $i, 2);
+                $i += 2;
+            } else {
+                $str .= substr($string, $i, 1);
+                $i++;
+            }
+            $len++;
+        }
+        return $str;
+    } else {
+        return $string;
+    }
+}
+
+function excerpt_length($exp)
+{
+    if (!function_exists('mb_substr')) {
+        $exp = GBsubstr($exp, 0, 80);
+    } else {
+        /*
+         * To use mb_substr() function, you should uncomment "extension=php_mbstring.dll" in php.ini
+         */
+        $exp = mb_substr($exp, 0, 80);
+    }
+    return $exp;
+}
+add_filter('the_excerpt', 'excerpt_length');
+
+/*
+ * 后台路径
+ */
+/*
+add_filter('site_url',  'wpadmin_filter', 10, 3);
+function wpadmin_filter( $url, $path, $orig_scheme ) {
+$old  = array( "/(wp-admin)/");
+$admin_dir = WP_ADMIN_DIR;
+$new  = array($admin_dir);
+return preg_replace( $old, $new, $url, 1);
+}
+ */
+
+function admin_ini()
+{
+    wp_enqueue_style('admin-styles-fix-icon', get_site_url() . '/wp-includes/css/dashicons.css');
+    wp_enqueue_style('cus-styles-fit', get_template_directory_uri() . '/inc/css/dashboard-fix.css');
+    wp_enqueue_script('lazyload', 'https://cdn.jsdelivr.net/npm/lazyload@2.0.0-beta.2/lazyload.min.js');
+}
+add_action('admin_enqueue_scripts', 'admin_ini');
+
+function custom_admin_js()
+{
+    echo '<script>
+    window.onload=function(){
+        lazyload();
+
+        try{
+            document.querySelector("#scheme-tip .notice-dismiss").addEventListener("click", function(){
+                location.href="?scheme-tip-dismissed' . BUILD_VERSION . '";
+            });
+        } catch(e){}
+    }
+    </script>';
+}
+add_action('admin_footer', 'custom_admin_js');
+
+/*
+ * 后台通知
+ */
+function scheme_tip()
+{
+    $msg = '<b>Why not try the new admin dashboard color scheme <a href="/wp-admin/profile.php">here</a>?</b>';
+    if (get_user_locale(get_current_user_id()) == "zh_CN") {
+        $msg = '<b>试一试新后台界面<a href="/wp-admin/profile.php">配色方案</a>吧？</b>';
+    }
+    if (get_user_locale(get_current_user_id()) == "zh_TW") {
+        $msg = '<b>試一試新後台界面<a href="/wp-admin/profile.php">色彩配置</a>吧？</b>';
+    }
+    if (get_user_locale(get_current_user_id()) == "ja") {
+        $msg = '<b>新しい<a href="/wp-admin/profile.php">管理画面の配色</a>を試しますか？</b>';
+    }
+    if (get_user_locale(get_current_user_id()) == "ja-JP") {
+        $msg = '<b>新しい<a href="/wp-admin/profile.php">管理画面の配色</a>を試しますか？</b>';
+    }
+
+    $user_id = get_current_user_id();
+    if (!get_user_meta($user_id, 'scheme-tip-dismissed' . BUILD_VERSION)) {
+        echo '<div class="notice notice-success is-dismissible" id="scheme-tip"><p><b>' . $msg . '</b></p></div>';
+    }
+}
+
+add_action('admin_notices', 'scheme_tip');
+
+function scheme_tip_dismissed()
+{
+    $user_id = get_current_user_id();
+    if (isset($_GET['scheme-tip-dismissed' . BUILD_VERSION])) {
+        add_user_meta($user_id, 'scheme-tip-dismissed' . BUILD_VERSION, 'true', true);
+    }
+
+}
+add_action('admin_init', 'scheme_tip_dismissed');
+
+//dashboard scheme
+function dash_scheme($key, $name, $col1, $col2, $col3, $col4, $base, $focus, $current, $rules = "")
+{
+    $hash = "color_1=" . str_replace("#", "", $col1) .
+    "&color_2=" . str_replace("#", "", $col2) .
+    "&color_3=" . str_replace("#", "", $col3) .
+    "&color_4=" . str_replace("#", "", $col4) .
+    "&rules=" . urlencode($rules);
+
+    wp_admin_css_color(
+        $key,
+        $name,
+        get_template_directory_uri() . "/inc/dash-scheme.php?" . $hash,
+        array($col1, $col2, $col3, $col4),
+        array('base' => $base, 'focus' => $focus, 'current' => $current)
+    );
+}
+
+//Sakurairo
+dash_scheme($key = "sakurairo", $name = "Sakurairo🌸",
+    $col1 = akina_option('admin_mcs'), $col2 = akina_option('admin_mcp'), $col3 = akina_option('admin_acc'), $col4 = akina_option('admin_acc'),
+    $base = "#FFF", $focus = "#FFF", $current = "#FFF",
+    $rules = '#adminmenu .wp-has-current-submenu .wp-submenu a,#adminmenu .wp-has-current-submenu.opensub .wp-submenu a,#adminmenu .wp-submenu a,#adminmenu a.wp-has-current-submenu:focus+.wp-submenu a,#wpadminbar .ab-submenu .ab-item,#wpadminbar .quicklinks .menupop ul li a,#wpadminbar .quicklinks .menupop.hover ul li a,#wpadminbar.nojs .quicklinks .menupop:hover ul li a,.folded #adminmenu .wp-has-current-submenu .wp-submenu a{color:' . akina_option('admin_font_skin') . '}body{background-image:url(' . akina_option('admin_menu_bg') . ');background-attachment:fixed;}#wpcontent{background:rgba(255,255,255,.0)}.wp-core-ui .button-primary{background:' . akina_option('admin_pb_skin') . '!important;border-color:' . akina_option('admin_pb_skin') . '!important;color:' . akina_option('admin_font_skin') . '!important;box-shadow:0 1px 0 ' . akina_option('admin_pb_skin') . '!important;text-shadow:0 -1px 1px ' . akina_option('admin_pb_skin') . ',1px 0 1px ' . akina_option('admin_pb_skin') . ',0 1px 1px ' . akina_option('admin_pb_skin') . ',-1px 0 1px ' . akina_option('admin_pb_skin') . '!important}');
+
+//Set Default Admin Color Scheme for New Users
+function set_default_admin_color($user_id)
+{
+    $args = array(
+        'ID' => $user_id,
+        'admin_color' => 'sunrise',
+    );
+    wp_update_user($args);
+}
+//add_action('user_register', 'set_default_admin_color');
+
+//Stop Users From Switching Admin Color Schemes
+//if ( !current_user_can('manage_options') ) remove_action( 'admin_color_scheme_picker', 'admin_color_scheme_picker' );
+
+// WordPress Custom Font @ Admin
+function custom_admin_open_sans_font()
+{
+    echo '<link href="https://fonts.googleapis.com/css?family=Merriweather+Sans&display=swap" rel="stylesheet">' . PHP_EOL;
+    echo '<style>body, #wpadminbar *:not([class="ab-icon"]), .wp-core-ui, .media-menu, .media-frame *, .media-modal *{font-family:"Noto Serif SC","Source Han Serif SC","Source Han Serif","source-han-serif-sc","PT Serif","SongTi SC","MicroSoft Yahei",Georgia,serif !important;}</style>' . PHP_EOL;
+}
+add_action('admin_head', 'custom_admin_open_sans_font');
+
+// WordPress Custom Font @ Admin Frontend Toolbar
+function custom_admin_open_sans_font_frontend_toolbar()
+{
+    if (current_user_can('administrator')) {
+        echo '<link href="https://fonts.googleapis.com/css?family=Merriweather+Sans&display=swap" rel="stylesheet">' . PHP_EOL;
+        echo '<style>#wpadminbar *:not([class="ab-icon"]){font-family:"Noto Serif SC","Source Han Serif SC","Source Han Serif","source-han-serif-sc","PT Serif","SongTi SC","MicroSoft Yahei",Georgia,serif !important;}</style>' . PHP_EOL;
+    }
+}
+add_action('wp_head', 'custom_admin_open_sans_font_frontend_toolbar');
+
+// WordPress Custom Font @ Admin Login
+function custom_admin_open_sans_font_login_page()
+{
+    if (stripos($_SERVER["SCRIPT_NAME"], strrchr(wp_login_url(), '/')) !== false) {
+        echo '<link href="https://fonts.googleapis.com/css?family=Noto+Serif+SC&display=swap" rel="stylesheet">' . PHP_EOL;
+        echo '<style>body{font-family:"Noto Serif SC","Source Han Serif SC","Source Han Serif","source-han-serif-sc","PT Serif","SongTi SC","MicroSoft Yahei",Georgia,serif !important;}</style>' . PHP_EOL;
+    }
+}
+add_action('login_head', 'custom_admin_open_sans_font_login_page');
+
+// 阻止垃圾注册
+add_action('register_post', 'codecheese_register_post', 10, 3);
+
+function codecheese_register_post($sanitized_user_login, $user_email, $errors)
+{
+
+    // Blocked domains
+    $domains = array('net.buzzcluby.com',
+        'buzzcluby.com',
+        'mail.ru',
+        'h.captchaeu.info',
+        'edge.codyting.com');
+
+    // Get visitor email domain
+    $email = explode('@', $user_email);
+
+    // Check and display error message for the registration form if exists
+    if (in_array($email[1], $domains)) {
+        $errors->add('invalid_email', __('<b>ERROR</b>: This email domain (<b>@' . $email[1] . '</b>) has been blocked. Please use another email.'));
+    }
+
+}
+
+// html 标签处理器
+function html_tag_parser($content)
+{
+    if (!is_feed()) {
+        if (akina_option('lazyload') && akina_option('lazyload_spinner')) {
+            $content = preg_replace(
+                '/<img(.+)src=[\'"]([^\'"]+)[\'"](.*)>/i',
+                "<img $1 class=\"lazyload\" data-src=\"$2\" src=\"" . akina_option('lazyload_spinner') . "\" onerror=\"imgError(this)\" $3 >\n<noscript>$0</noscript>",
+                $content
+            );
+        }
+
+        //Fancybox
+        /* Markdown Regex Pattern for Matching URLs:
+         * https://daringfireball.net/2010/07/improved_regex_for_matching_urls
+         */
+        $url_regex = '((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))';
+
+        //With Thumbnail: !{alt}(url)[th_url]
+        if (preg_match_all('/\!\{.*?\)\[.*?\]/i', $content, $matches)) {
+            for ($i = 0; $i < sizeof($matches); $i++) {
+                $content = str_replace($matches[$i], preg_replace(
+                    '/!\{([^\{\}]+)*\}\(' . $url_regex . '\)\[' . $url_regex . '\]/i',
+                    '<a data-fancybox="gallery"
+                        data-caption="$1"
+                        class="fancybox"
+                        href="$2"
+                        alt="$1"
+                        title="$1"><img src="$7" target="_blank" rel="nofollow" class="fancybox"></a>',
+                    $matches[$i]),
+                    $content);
+            }
+        }
+
+        //Without Thumbnail :!{alt}(url)
+        $content = preg_replace(
+            '/!\{([^\{\}]+)*\}\(' . $url_regex . '\)/i',
+            '<a data-fancybox="gallery"
+                data-caption="$1"
+                class="fancybox"
+                href="$2"
+                alt="$1"
+                title="$1"><img src="$2" target="_blank" rel="nofollow" class="fancybox"></a>',
+            $content
+        );
+    }
+    //html tag parser for rss
+    if (is_feed()) {
+        //Fancybox
+        $url_regex = '((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))';
+        if (preg_match_all('/\!\{.*?\)\[.*?\]/i', $content, $matches)) {
+            for ($i = 0; $i < sizeof($matches); $i++) {
+                $content = str_replace(
+                    $matches[$i],
+                    preg_replace('/!\{([^\{\}]+)*\}\(' . $url_regex . '\)\[' . $url_regex . '\]/i', '<a href="$2"><img src="$7" alt="$1" title="$1"></a>', $matches[$i]),
+                    $content
+                );
+            }
+        }
+        $content = preg_replace('/!\{([^\{\}]+)*\}\(' . $url_regex . '\)/i', '<a href="$2"><img src="$2" alt="$1" title="$1"></a>', $content);
+    }
+    return $content;
+}
+add_filter('the_content', 'html_tag_parser'); //替换文章关键词
+//add_filter( 'comment_text', 'html_tag_parser' );//替换评论关键词
+
+/*
+ * QQ 评论
+ */
+// 数据库插入评论表单的qq字段
+add_action('wp_insert_comment', 'sql_insert_qq_field', 10, 2);
+function sql_insert_qq_field($comment_ID, $commmentdata)
+{
+    $qq = isset($_POST['new_field_qq']) ? $_POST['new_field_qq'] : false;
+    update_comment_meta($comment_ID, 'new_field_qq', $qq); // new_field_qq 是表单name值，也是存储在数据库里的字段名字
+}
+// 后台评论中显示qq字段
+add_filter('manage_edit-comments_columns', 'add_comments_columns');
+add_action('manage_comments_custom_column', 'output_comments_qq_columns', 10, 2);
+function add_comments_columns($columns)
+{
+    $columns['new_field_qq'] = __('QQ'); // 新增列名称
+    return $columns;
+}
+function output_comments_qq_columns($column_name, $comment_id)
+{
+    switch ($column_name) {
+        case "new_field_qq":
+            // 这是输出值，可以拿来在前端输出，这里已经在钩子manage_comments_custom_column上输出了
+            echo get_comment_meta($comment_id, 'new_field_qq', true);
+            break;
+    }
+}
+/**
+ * 头像调用路径
+ */
+add_filter('get_avatar', 'change_avatar', 10, 3);
+function change_avatar($avatar)
+{
+    global $comment, $sakura_privkey;
+    if ($comment) {
+        if (get_comment_meta($comment->comment_ID, 'new_field_qq', true)) {
+            $qq_number = get_comment_meta($comment->comment_ID, 'new_field_qq', true);
+            if (akina_option('qq_avatar_link') == 'off') {
+                return '<img src="https://q2.qlogo.cn/headimg_dl?dst_uin=' . $qq_number . '&spec=100" data-src="' . stripslashes($m[1]) . '" class="lazyload avatar avatar-24 photo" alt="😀" width="24" height="24" onerror="imgError(this,1)">';
+            } elseif (akina_option('qq_avatar_link') == 'type_3') {
+                $qqavatar = file_get_contents('http://ptlogin2.qq.com/getface?appid=1006102&imgtype=3&uin=' . $qq_number);
+                preg_match('/:\"([^\"]*)\"/i', $qqavatar, $matches);
+                return '<img src="' . $matches[1] . '" data-src="' . stripslashes($m[1]) . '" class="lazyload avatar avatar-24 photo" alt="😀" width="24" height="24" onerror="imgError(this,1)">';
+            } else {
+                $iv = str_repeat($sakura_privkey, 2);
+                $encrypted = openssl_encrypt($qq_number, 'aes-128-cbc', $sakura_privkey, 0, $iv);
+                $encrypted = urlencode(base64_encode($encrypted));
+                return '<img src="' . rest_url("sakura/v1/qqinfo/avatar") . '?qq=' . $encrypted . '"class="lazyload avatar avatar-24 photo" alt="😀" width="24" height="24" onerror="imgError(this,1)">';
+            }
+        } else {
+            return $avatar;
+        }
+    } else {
+        return $avatar;
+    }
+}
+
+// default feature image
+function DEFAULT_FEATURE_IMAGE()
+{
+    return rest_url('sakura/v1/image/feature') . '?' . rand(1, 1000);
+}
+
+//评论回复
+function sakura_comment_notify($comment_id)
+{
+    if (!$_POST['mail-notify']) {
+        update_comment_meta($comment_id, 'mail_notify', 'false');
+    }
+
+}
+add_action('comment_post', 'sakura_comment_notify');
+
+//侧栏小工具
+if (akina_option('sakura_widget')) {
+    if (function_exists('register_sidebar')) {
+        register_sidebar(array(
+            'name' => __('Sidebar'), //侧栏
+            'id' => 'sakura_widget',
+            'before_widget' => '<div class="widget %2$s">',
+            'after_widget' => '</div>',
+            'before_title' => '<div class="title"><h2>',
+            'after_title' => '</h2></div>',
+        ));
+    }
+}
+
+// 评论Markdown解析
+function markdown_parser($incoming_comment)
+{
+    global $wpdb, $comment_markdown_content;
+    $re = '/```([\s\S]*?)```[\s]*|`{1,2}[^`](.*?)`{1,2}|\[.*?\]\([\s\S]*?\)/m';
+    if (preg_replace($re, 'temp', $incoming_comment['comment_content']) != strip_tags(preg_replace($re, 'temp', $incoming_comment['comment_content']))) {
+        siren_ajax_comment_err('评论只支持Markdown啦，见谅╮(￣▽￣)╭<br>Markdown Supported while <i class="fa fa-code" aria-hidden="true"></i> Forbidden');
+        return ($incoming_comment);
+    }
+    $myCustomer = $wpdb->get_row("SELECT * FROM wp_comments");
+    //Add column if not present.
+    if (!isset($myCustomer->comment_markdown)) {
+        $wpdb->query("ALTER TABLE wp_comments ADD comment_markdown text");
+    }
+    $comment_markdown_content = $incoming_comment['comment_content'];
+    include 'inc/Parsedown.php';
+    $Parsedown = new Parsedown();
+    $incoming_comment['comment_content'] = $Parsedown->setUrlsLinked(false)->text($incoming_comment['comment_content']);
+    return $incoming_comment;
+}
+add_filter('preprocess_comment', 'markdown_parser');
+remove_filter( 'comment_text', 'make_clickable', 9 );
+
+//保存Markdown评论
+function save_markdown_comment($comment_ID, $comment_approved)
+{
+    global $wpdb, $comment_markdown_content;
+    $comment = get_comment($comment_ID);
+    $comment_content = $comment_markdown_content;
+    //store markdow content
+    $wpdb->query("UPDATE wp_comments SET comment_markdown='" . $comment_content . "' WHERE comment_ID='" . $comment_ID . "';");
+}
+add_action('comment_post', 'save_markdown_comment', 10, 2);
+
+//打开评论HTML标签限制
+function allow_more_tag_in_comment()
+{
+    global $allowedtags;
+    $allowedtags['pre'] = array('class' => array());
+    $allowedtags['code'] = array('class' => array());
+    $allowedtags['h1'] = array('class' => array());
+    $allowedtags['h2'] = array('class' => array());
+    $allowedtags['h3'] = array('class' => array());
+    $allowedtags['h4'] = array('class' => array());
+    $allowedtags['h5'] = array('class' => array());
+    $allowedtags['ul'] = array('class' => array());
+    $allowedtags['ol'] = array('class' => array());
+    $allowedtags['li'] = array('class' => array());
+    $allowedtags['td'] = array('class' => array());
+    $allowedtags['th'] = array('class' => array());
+    $allowedtags['tr'] = array('class' => array());
+    $allowedtags['table'] = array('class' => array());
+    $allowedtags['thead'] = array('class' => array());
+    $allowedtags['tbody'] = array('class' => array());
+    $allowedtags['span'] = array('class' => array());
+}
+add_action('pre_comment_on_post', 'allow_more_tag_in_comment');
+
+/*
+ * 随机图
+ */
+function create_sakura_table()
+{
+    if(akina_option('cover_beta')){
+        global $wpdb, $sakura_image_array, $sakura_mobile_image_array,$sakura_privkey;
+    }else{
+        global $wpdb, $sakura_image_array,$sakura_privkey;
+    }
+    $sakura_table_name = $wpdb->base_prefix . 'sakurairo';
+    require_once ABSPATH . "wp-admin/includes/upgrade.php";
+    dbDelta("CREATE TABLE IF NOT EXISTS `" . $sakura_table_name . "` (
+        `mate_key` varchar(50) COLLATE utf8_bin NOT NULL,
+        `mate_value` text COLLATE utf8_bin NOT NULL,
+        PRIMARY KEY (`mate_key`)
+        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;");
+    //default data
+    if (!$wpdb->get_var("SELECT COUNT(*) FROM $sakura_table_name WHERE mate_key = 'manifest_json'")) {
+        $manifest = array(
+            "mate_key" => "manifest_json",
+            "mate_value" => file_get_contents(get_template_directory() . "/manifest/manifest.json"),
+        );
+        $wpdb->insert($sakura_table_name, $manifest);
+    }
+    if(akina_option('cover_beta')){
+        if (!$wpdb->get_var("SELECT COUNT(*) FROM $sakura_table_name WHERE mate_key = 'mobile_manifest_json'")) {
+            $mobile_manifest = array(
+               "mate_key" => "mobile_manifest_json",
+                "mate_value" => file_get_contents(get_template_directory() . "/manifest/manifest_mobile.json"),
+            );
+        $wpdb->insert($sakura_table_name, $mobile_manifest);
+        }
+    }
+    if (!$wpdb->get_var("SELECT COUNT(*) FROM $sakura_table_name WHERE mate_key = 'json_time'")) {
+        $time = array(
+            "mate_key" => "json_time",
+            "mate_value" => date("Y-m-d H:i:s", time()),
+        );
+        $wpdb->insert($sakura_table_name, $time);
+    }
+    if (!$wpdb->get_var("SELECT COUNT(*) FROM $sakura_table_name WHERE mate_key = 'privkey'")) {
+        $privkey = array(
+            "mate_key" => "privkey",
+            "mate_value" => wp_generate_password(8),
+        );
+        $wpdb->insert($sakura_table_name, $privkey);
+    }
+    //reduce sql query
+    $sakura_image_array = $wpdb->get_var("SELECT `mate_value` FROM  $sakura_table_name WHERE `mate_key`='manifest_json'");
+    if(akina_option('cover_beta')){$sakura_mobile_image_array = $wpdb->get_var("SELECT `mate_value` FROM  $sakura_table_name WHERE `mate_key`='mobile_manifest_json'");}
+    $sakura_privkey = $wpdb->get_var("SELECT `mate_value` FROM  $sakura_table_name WHERE `mate_key`='privkey'");
+}
+add_action('after_setup_theme', 'create_sakura_table');
+
+//rest api支持
+function permalink_tip()
+{
+    if ( !get_option('permalink_structure') ){
+        $msg = __('<b> For a better experience, please do not set <a href="/wp-admin/options-permalink.php"> permalink </a> as plain. To do this, you may need to configure <a href="https://www.wpdaxue.com/wordpress-rewriterule.html" target="_blank"> pseudo-static </a>. </ b>','sakurairo'); /*<b>为了更好的使用体验，请不要将<a href="/wp-admin/options-permalink.php">固定链接</a>设置为朴素。为此，您可能需要配置<a href="https://www.wpdaxue.com/wordpress-rewriterule.html" target="_blank">伪静态</a>。</b>*/
+        echo '<div class="notice notice-success is-dismissible" id="scheme-tip"><p><b>' . $msg . '</b></p></div>';
+    }
+}
+add_action('admin_notices', 'permalink_tip');
+//code end
+
+//解析短代码  
+add_shortcode('task', 'task_shortcode');  
+function task_shortcode( $attr , $content = '') {             
+    $out ='<div class="task shortcodestyle"><i class="fa fa-tasks"></i>'.$content.'</div>';  
+    return $out;  
+}  
+add_shortcode('warning', 'warning_shortcode');  
+function warning_shortcode( $attr , $content = '') {              
+    $out ='<div class="warning shortcodestyle"><i class="fa fa fa-exclamation-triangle"></i>'.$content.'</div>';  
+    return $out;  
+}  
+add_shortcode('noway', 'noway_shortcode');  
+function noway_shortcode( $attr , $content = '') {            
+    $out ='<div class="noway shortcodestyle"><i class="fa fa-times-rectangle"></i>'.$content.'</div>';  
+    return $out;  
+}  
+add_shortcode('buy', 'buy_shortcode');  
+function buy_shortcode( $attr , $content = '') {              
+    $out ='<div class="buy shortcodestyle"><i class="fa fa-check-square"></i>'.$content.'</div>';  
+    return $out;  
+}  
+
+//code end
+
+//WEBP支持
+function mimvp_filter_mime_types( $array ) {
+    $array['webp'] = 'image/webp';
+    return $array;
+}
+add_filter( 'mime_types', 'mimvp_filter_mime_types', 10, 1 );
+function mimvp_file_is_displayable_image($result, $path) {
+    $info = @getimagesize( $path );
+    if($info['mime'] == 'image/webp') {
+        $result = true;
+    }
+    return $result;
+}
+add_filter( 'file_is_displayable_image', 'mimvp_file_is_displayable_image', 10, 2 );
+
+//code end
+
+//展开收缩功能
+function xcollapse($atts, $content = null){
+    extract(shortcode_atts(array("title"=>""),$atts));
+    return '<div style="margin: 0.5em 0;">
+    <div class="xControl">
+    <i class="fa fa-arrow-down" style="color: #9F6F26;"></i> &nbsp;&nbsp;
+    <span class="xTitle">'.$title.'</span>&nbsp;&nbsp;==>&nbsp;&nbsp;<a href="javascript:void(0)" class="collapseButton xButton"><span class="xbtn02">展开 / 收缩</span></a>
+    <div style="clear: both;"></div>
+    </div>
+    <div class="xContent" style="display: none;">'.$content.'</div>
+    </div>';
+   }
+   add_shortcode('collapse', 'xcollapse');
+
+//code end

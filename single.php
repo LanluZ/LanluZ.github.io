@@ -1,36 +1,26 @@
-<?php get_header();?>
-<div class="g">
-	<div class="row">
+<?php
+/**
+ * The template for displaying all single posts.
+ *
+ * @link https://developer.wordpress.org/themes/basics/template-hierarchy/#single-post
+ *
+ * @package Akina
+ */
+
+get_header(); ?>
+	<div id="primary" class="content-area">
+		<main id="main" class="site-main" role="main">
 		<?php
-		if(have_posts()){
-			while(have_posts()){
-				the_post();
-				?>
-				<div id="main" class="main g-desktop-3-4">
-					<?php theme_functions::singular_content();?>
-					
-					<?php theme_functions::adjacent_posts();?>
-					
-					<?php
-					/**
-					 * ad
-					 */
-					if(class_exists('theme_adbox') && !empty(theme_adbox::display_frontend('below-adjacent-post'))){
-						?>
-						<div class="ad-container ad-below-adjacent-post"><?= theme_adbox::display_frontend('below-adjacent-post');?></div>
-						<?php
-					}
-					?>
-					<?php theme_functions::the_related_posts();?>
-					<?php comments_template();?>
-				</div>
-				<?php include __DIR__ . '/sidebar-post.php';?>
-			<?php 
-			}
-		}else{ 
-			?>
-			
-		<?php } ?>
-	</div>
-</div>
-<?php get_footer();?>
+		while ( have_posts() ) : the_post();
+			get_template_part( 'tpl/content', 'single' );
+			get_template_part('layouts/sidebox');
+			get_template_part('layouts/post','nextprev');  
+            if(akina_option('show_authorprofile')){ 
+                get_template_part('layouts/authorprofile');
+            }
+		endwhile; // End of the loop.
+		?>
+		</main><!-- #main -->
+	</div><!-- #primary -->
+<?php
+get_footer();
