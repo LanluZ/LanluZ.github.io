@@ -3,13 +3,12 @@
 ---
 
 <img alt="" src="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fb-ssl.duitang.com%2Fuploads%2Fitem%2F201612%2F10%2F20161210234629_8zvRy.thumb.400_0.jpeg&amp;refer=http%3A%2F%2Fb-ssl.duitang.com&amp;app=2002&amp;size=f9999,10000&amp;q=a80&amp;n=0&amp;g=0n&amp;fmt=jpeg?sec=1619944306&amp;t=a87b1b09570113de3f60cd95616e111d"/>
+
 + 我想说你们的工作人员有点问题，我提交反馈，你们不回复并将我设置为黑名单，消费我们这些使用者的体验很有意思吗？
 + 更新说明写的暧昧不清就算了，但是学生怨声载道，你们却没有做出任何回应，不正是在消费我们的心态吗？
 + 你也不要说什么如果你觉得程序垃圾让我来写，你这就好比一个不会做菜的人不能评价一个人做的菜一样离谱
 
 **总汇**
-
-[TOCM]
 
 [TOC]
 
