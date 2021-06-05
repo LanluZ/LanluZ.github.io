@@ -28,6 +28,7 @@
                 <div class="row">
                     <a href="https://github.com/LanluZ/LanluZ.github.io" target="_blank" class="btn btn-secondary col-lg-4">GitHub</a>
                     <button id="button-message" class="btn btn-info col-lg-4">致慧道</button>
+                    <button id="button-photo" class="btn btn-primary col-lg-4">图片</button>
                     <a href="https://lanluz.github.io/Mindustry-guide/" target="_blank" class="btn btn-warning col-lg-8">Mindustry中文逻辑手册</a>
                 </div>
 
@@ -64,6 +65,17 @@
             layer.open({
                 type: 2,
                 title: '目前可以公开的情报',
+                shadeClose: true,
+                shade: false,
+                maxmin: true, //开启最大化最小化按钮
+                area: ['80%', '100%'],
+                content: './button/message.html'
+            });
+        });
+        $('#button-photo').on('click', function() {
+            layer.open({
+                type: 2,
+                title: '我妹妹',
                 shadeClose: true,
                 shade: false,
                 maxmin: true, //开启最大化最小化按钮
